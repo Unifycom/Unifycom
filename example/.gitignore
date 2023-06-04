@@ -7,6 +7,7 @@ target/
 */.project
 .classpath
 .project
+.idea/
 .svn/
 .externalToolBuilders/
 gradle/
@@ -17,6 +18,3 @@ node_modules
 logs/
 *.iml
 .flattened-pom.xml
-
-.idea/*.*
-.idea/codeStyles/Project.xml
