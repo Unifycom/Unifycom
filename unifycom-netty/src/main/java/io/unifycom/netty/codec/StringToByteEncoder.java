@@ -31,7 +31,10 @@ public class StringToByteEncoder extends NettyChannelEncoder<String> {
             @Override
             protected void encode(ChannelHandlerContext ctx, String msg, ByteBuf out) throws Exception {
 
-                out.writeBytes(ByteBufUtil.encodeString(ctx.alloc(), CharBuffer.wrap(msg), charset));
+                ByteBuf encoded =  ByteBufUtil.encodeString(ctx.alloc(), CharBuffer.wrap(msg), charset);
+                out.writeBytes(encoded);
+
+                encoded.release();
             }
         };
     }

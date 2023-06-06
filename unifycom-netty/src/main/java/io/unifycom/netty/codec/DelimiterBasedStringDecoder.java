@@ -11,6 +11,8 @@ import java.nio.charset.StandardCharsets;
 
 public class DelimiterBasedStringDecoder extends NettyChannelDecoder {
 
+    private Charset charset;
+
     private final ByteBuf delimiter;
     private final int maxFrameLength;
 
@@ -22,12 +24,14 @@ public class DelimiterBasedStringDecoder extends NettyChannelDecoder {
 
     public DelimiterBasedStringDecoder(int maxFrameLength, String delimiter) {
 
-        this(maxFrameLength, Unpooled.copiedBuffer(delimiter, StandardCharsets.UTF_8));
+        this(maxFrameLength, delimiter, StandardCharsets.UTF_8);
     }
 
     public DelimiterBasedStringDecoder(int maxFrameLength, String delimiter, Charset charset) {
 
         this(maxFrameLength, Unpooled.copiedBuffer(delimiter, charset));
+
+        this.charset = charset;
     }
 
     @Override
@@ -40,6 +44,6 @@ public class DelimiterBasedStringDecoder extends NettyChannelDecoder {
     @SuppressWarnings("unchecked")
     public MessageToMessageDecoder<ByteBuf> getMessageToMessageDecoder() {
 
-        return new StringDecoder();
+        return new StringDecoder(charset);
     }
 }
