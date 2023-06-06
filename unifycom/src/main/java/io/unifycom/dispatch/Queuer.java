@@ -18,24 +18,22 @@ public class Queuer {
 
     private static final Logger logger = LoggerFactory.getLogger(Queuer.class);
 
-    private static final ExecutorService EXECUTOR = new ThreadPoolExecutor(0, 10_000, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
-                                                                           new BasicThreadFactory.Builder().namingPattern(
-                                                                               Queuer.class.getSimpleName() + "-%d").daemon(true).build());
+    private ExecutorService executor;
     private final Future<?> future;
     private BlockingQueue<Object> queue = null;
 
     private volatile boolean stopped = false;
 
-    public Queuer(BiConsumer<Channel, Object> func, int capacity) {
+    public Queuer(ExecutorService executor, BiConsumer<Channel, Object> func, int capacity) {
 
-        this(func, 0, capacity);
+        this(executor, func, 0, capacity);
     }
 
-    public Queuer(BiConsumer<Channel, Object> func, int size4Warning, int capacity) {
+    public Queuer(ExecutorService executor, BiConsumer<Channel, Object> func, int size4Warning, int capacity) {
 
         queue = new ArrayBlockingQueue<>(capacity);
 
-        future = EXECUTOR.submit(() -> {
+        future = executor.submit(() -> {
 
             while (!stopped) {
 
