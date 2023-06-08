@@ -139,19 +139,19 @@ public class TcpServerChannel extends AbstractServerChannel {
         if (workerGroup != null) {
 
             workerGroup.shutdownGracefully();
-            logger.debug("{}} of {} on {} has been shutdown.", workerGroup.getClass().getSimpleName(), getName(), config.getPort());
+            logger.debug("{} of {} on {} has been shutdown.", workerGroup.getClass().getSimpleName(), getName(), config.getPort());
         }
 
         if (bossGroup != null) {
 
             bossGroup.shutdownGracefully();
-            logger.debug("{}} of {} on {} has been shutdown.", bossGroup.getClass().getSimpleName(), getName(), config.getPort());
+            logger.debug("{} of {} on {} has been shutdown.", bossGroup.getClass().getSimpleName(), getName(), config.getPort());
         }
 
         if (channelDispatcher != null) {
 
             channelDispatcher.close();
-            logger.info("{}} of {} on {} has been shutdown gracefully.", channelDispatcher.getClass().getSimpleName(), getName(), config.getPort());
+            logger.info("{} of {} on {} has been shutdown gracefully.", channelDispatcher.getClass().getSimpleName(), getName(), config.getPort());
         }
 
         if (bootstrap != null) {
