@@ -1,36 +1,39 @@
 package io.unifycom.dispath;
 
-import io.unifycom.dispatch.QueueElement;
-import io.unifycom.dispatch.Queuer;
+import io.unifycom.dispatch.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.junit.Test;
 
 public class QueuerTest {
 
-    private static final ExecutorService EXECUTOR = new ThreadPoolExecutor(0, 1000, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
-                                                                           new BasicThreadFactory.Builder().namingPattern(
-                                                                               Queuer.class.getSimpleName() + "-%d").daemon(true).build());
+    private static AtomicInteger COUNTER = new AtomicInteger();
+
+    private final ThreadFactory threadFactory = new BasicThreadFactory.Builder().namingPattern("Queue-" + COUNTER.incrementAndGet() + "-%d")
+        .daemon(true).build();
+    private ExecutorService executor = new ThreadPoolExecutor(0, 10, 1L, TimeUnit.HOURS, new SynchronousQueue<>(), threadFactory);
 
 
     @Test
     public void testPut() throws InterruptedException {
 
-        Queuer q = new Queuer(EXECUTOR, (c, o) -> {
+        BlockingQueue q = new BlockingQueue(executor, (c, o) -> {
             System.out.println(o);
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-        }, 2, 10);
+        }, 10);
 
         for (int i = 0; i < 10; i++) {
 
-            q.put(new QueueElement(null, "test" + i));
+            q.put(null, "test" + i);
             Thread.sleep(100);
         }
 

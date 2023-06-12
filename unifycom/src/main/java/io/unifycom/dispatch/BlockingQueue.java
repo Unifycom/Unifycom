@@ -2,34 +2,24 @@ package io.unifycom.dispatch;
 
 import io.unifycom.Channel;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-
-import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Queuer {
+public class BlockingQueue implements Queue {
 
-    private static final Logger logger = LoggerFactory.getLogger(Queuer.class);
+    private static final Logger logger = LoggerFactory.getLogger(BlockingQueue.class);
 
     private ExecutorService executor;
     private final Future<?> future;
-    private BlockingQueue<Object> queue = null;
+    private final java.util.concurrent.BlockingQueue<Object> queue;
 
     private volatile boolean stopped = false;
 
-    public Queuer(ExecutorService executor, BiConsumer<Channel, Object> func, int capacity) {
-
-        this(executor, func, 0, capacity);
-    }
-
-    public Queuer(ExecutorService executor, BiConsumer<Channel, Object> func, int size4Warning, int capacity) {
+    public BlockingQueue(ExecutorService executor, BiConsumer<Channel, Object> func, int capacity) {
 
         queue = new ArrayBlockingQueue<>(capacity);
 
@@ -47,15 +37,10 @@ public class Queuer {
                     logger.warn(e.getMessage(), e);
                 }
 
-                if (in != null && in instanceof QueueElement) {
+                if (in != null && in instanceof Element) {
 
-                    QueueElement element = (QueueElement)in;
+                    Element element = (Element)in;
                     func.accept(element.getChannel(), element.getObject());
-                }
-
-                if (size4Warning >= 1 && queue.size() >= size4Warning) {
-
-                    logger.warn("[Queue blocking] queue size:{}.", queue.size());
                 }
             }
 
@@ -73,11 +58,11 @@ public class Queuer {
         });
     }
 
-    public void put(QueueElement in) throws InterruptedException {
+    public void put(Channel channel, Object object) throws InterruptedException {
 
         try {
 
-            if (!queue.offer(in, 1, TimeUnit.SECONDS)) {
+            if (!queue.offer(new Element(channel, object), 1, TimeUnit.SECONDS)) {
 
                 logger.warn("Offer object to the queue failed, queue size {}", queue.size());
             }
@@ -88,6 +73,7 @@ public class Queuer {
         }
     }
 
+    @Override
     public void close() {
 
         stopped = true;
