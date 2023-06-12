@@ -66,5 +66,6 @@ public class RingQueue implements Queue {
     public void close() {
 
         queue.shutdown();
+        logger.info("Stopped.");
     }
 }
