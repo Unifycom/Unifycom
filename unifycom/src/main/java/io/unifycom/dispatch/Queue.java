@@ -4,9 +4,6 @@ import io.unifycom.Channel;
 
 public interface Queue {
 
-    String RING = "RING";
-    String BLOCKING = "BLOCKING";
-
     void put(Channel channel, Object object) throws Exception;
 
     void close();

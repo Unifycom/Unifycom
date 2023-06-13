@@ -44,6 +44,12 @@ public abstract class AbstractQueuableChannelDispatcher extends DefaultChannelDi
     }
 
     protected AbstractQueuableChannelDispatcher(MessageToEventDecoder messageToEventDecoder, ResultToMessageEncoder resultToMessageEncoder,
+                                                int queueCount, int queueCapacity) {
+
+        this(messageToEventDecoder, resultToMessageEncoder, RingQueue.class, queueCount, queueCapacity);
+    }
+
+    protected AbstractQueuableChannelDispatcher(MessageToEventDecoder messageToEventDecoder, ResultToMessageEncoder resultToMessageEncoder,
                                                 Class<? extends Queue> queueClass, int queueCount, int queueCapacity) {
 
         super(messageToEventDecoder, resultToMessageEncoder);

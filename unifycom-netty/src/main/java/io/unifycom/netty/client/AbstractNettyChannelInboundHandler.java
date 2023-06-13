@@ -38,7 +38,7 @@ public abstract class AbstractNettyChannelInboundHandler extends SimpleChannelIn
 
         super.channelActive(ctx);
 
-        logger.info("Connection to {} is active.", ctx.channel().remoteAddress());
+        logger.info("Connection of {} is active.", ctx.channel().remoteAddress());
         ConnectedEvent event = new ConnectedEvent(ctx.channel().id().asShortText(), ctx.channel().remoteAddress().toString());
 
         channelDispatcher.fire(channel, event);
@@ -49,7 +49,7 @@ public abstract class AbstractNettyChannelInboundHandler extends SimpleChannelIn
 
         super.channelInactive(ctx);
 
-        logger.info("Connection to {} is inactive.", ctx.channel().remoteAddress());
+        logger.info("Connection of {} is inactive.", ctx.channel().remoteAddress());
         DisconnectedEvent event = new DisconnectedEvent(ctx.channel().id().asShortText(), ctx.channel().remoteAddress().toString());
 
         channelDispatcher.fire(channel, event);

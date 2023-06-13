@@ -96,6 +96,11 @@ public abstract class AbstractNettyChannel extends AbstractChannel {
             throw new IOException("The channel is not ready yet");
         }
 
+        if (!channel.isWritable()) {
+
+            throw new IOException("The channel is not writable");
+        }
+
         return channel.writeAndFlush(out);
     }
 

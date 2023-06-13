@@ -18,7 +18,7 @@ public class RingQueue implements Queue {
     private final Disruptor<Element> queue;
 
 
-    public RingQueue(ThreadFactory threadFactory,BiConsumer<Channel, Object> func, int capacity) {
+    public RingQueue(ThreadFactory threadFactory, BiConsumer<Channel, Object> func, int capacity) {
 
         if (Integer.bitCount(capacity) != 1) {
 
