@@ -21,6 +21,12 @@
         <dependency>
             <groupId>io.github.unifycom</groupId>
             <artifactId>netty-transport-purejavacomm</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.java.dev.jna</groupId>
+                    <artifactId>jna</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 
