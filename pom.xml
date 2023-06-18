@@ -13,6 +13,7 @@
         <module>unifycom</module>
         <module>unifycom-netty</module>
         <module>unifycom-tcp</module>
+        <module>unifycom-udp</module>
         <module>unifycom-rxtx</module>
         <module>unifycom-bluetooth</module>
         <module>unifycom-websocket</module>
@@ -40,7 +41,7 @@
         <commons-collections4.version>4.4</commons-collections4.version>
         <commons-io.version>2.12.0</commons-io.version>
         <reflections.version>0.10.2</reflections.version>
-        <netty.version>4.1.84.Final</netty.version>
+        <netty.version>4.1.93.Final</netty.version>
         <netty-transport-purejavacomm.version>1.0.1</netty-transport-purejavacomm.version>
         <undertow.version>2.2.23.Final</undertow.version>
         <fastjson2.version>2.0.25</fastjson2.version>
