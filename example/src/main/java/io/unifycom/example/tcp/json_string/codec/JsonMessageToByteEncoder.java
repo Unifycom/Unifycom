@@ -1,7 +1,7 @@
 package io.unifycom.example.tcp.json_string.codec;
 
 import com.alibaba.fastjson2.JSON;
-import io.unifycom.netty.codec.NettyChannelEncoder;
+import io.unifycom.netty.codec.DefaultNettyChannelEncoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
@@ -11,7 +11,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class JsonMessageToByteEncoder extends NettyChannelEncoder<Object> {
+public class JsonMessageToByteEncoder extends DefaultNettyChannelEncoder<Object> {
 
     private Charset charset = StandardCharsets.UTF_8;
 

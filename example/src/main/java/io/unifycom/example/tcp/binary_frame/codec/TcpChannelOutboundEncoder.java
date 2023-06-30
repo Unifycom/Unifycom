@@ -1,13 +1,13 @@
 package io.unifycom.example.tcp.binary_frame.codec;
 
 import io.unifycom.example.tcp.binary_frame.protocol.OutboundMessage;
-import io.unifycom.netty.codec.NettyChannelEncoder;
+import io.unifycom.netty.codec.DefaultNettyChannelEncoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.util.ReferenceCountUtil;
 
-public class TcpChannelOutboundEncoder extends NettyChannelEncoder {
+public class TcpChannelOutboundEncoder extends DefaultNettyChannelEncoder {
 
     @Override
     public MessageToByteEncoder getMessageToByteEncoder() {

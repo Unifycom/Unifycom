@@ -4,14 +4,14 @@ import io.unifycom.example.tcp.binary_frame.exception.UnsupportedProtocolExcepti
 import io.unifycom.example.tcp.binary_frame.protocol.InboundHelloMessage;
 import io.unifycom.example.tcp.binary_frame.protocol.Instruction;
 import io.unifycom.example.tcp.binary_frame.protocol.Message;
-import io.unifycom.netty.codec.NettyChannelDecoder;
+import io.unifycom.netty.codec.DefaultNettyChannelDecoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.util.ReferenceCountUtil;
 
-public class TcpChannelInboundDecoder extends NettyChannelDecoder {
+public class TcpChannelInboundDecoder extends DefaultNettyChannelDecoder {
 
     @Override
     public ByteToMessageDecoder getByteToMessageDecoder() {

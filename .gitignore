@@ -18,5 +18,6 @@ logs/
 *.iml
 .flattened-pom.xml
 
+.idea/
 .idea/*.*
 .idea/codeStyles/Project.xml
