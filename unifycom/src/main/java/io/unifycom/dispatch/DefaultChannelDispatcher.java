@@ -1,7 +1,9 @@
 package io.unifycom.dispatch;
 
 import io.unifycom.Channel;
+import io.unifycom.Envelope;
 import io.unifycom.event.ChannelEvent;
+import io.unifycom.event.EnvelopeEvent;
 import io.unifycom.event.codec.MessageToEventDecoder;
 import io.unifycom.event.codec.ResultToMessageEncoder;
 import io.unifycom.event.handler.ChannelEventHandler;
@@ -12,7 +14,6 @@ import io.unifycom.util.ReflectionUtils;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,9 +60,18 @@ public class DefaultChannelDispatcher implements ChannelDispatcher {
     @SuppressWarnings("unchecked")
     public void fire(Channel channel, Object in) {
 
+        ChannelEvent event = null;
         long begin = System.currentTimeMillis();
 
-        ChannelEvent event = messageToEventDecoder.decode(in);
+        if (in instanceof Envelope) {
+
+            Envelope envelope = (Envelope)in;
+            event = messageToEventDecoder.decode(envelope.getContent());
+            event = new EnvelopeEvent(event, envelope.getRecipient(), envelope.getSender());
+        } else {
+
+            event = messageToEventDecoder.decode(in);
+        }
 
         if (event != null) {
 
@@ -75,18 +85,26 @@ public class DefaultChannelDispatcher implements ChannelDispatcher {
     @SuppressWarnings("unchecked")
     public void fire(Channel channel, ChannelEvent in) {
 
-        ChannelEventHandler eventHandler = eventHandlers.get(in.getClass());
+        ChannelEvent channelEvent = in;
+        if (in instanceof EnvelopeEvent) {
+
+            channelEvent = ((EnvelopeEvent<?>)in).getContent();
+        }
+
+        Class<?> eventClass = channelEvent.getClass();
+
+        ChannelEventHandler eventHandler = eventHandlers.get(eventClass);
         ChannelEventHandlerInterceptor globalInterceptor = handlerInterceptors.get(ChannelEvent.class);
 
-        if (!preHandle(channel, in, eventHandler, globalInterceptor)) {
+        if (!preHandle(channel, channelEvent, eventHandler, globalInterceptor)) {
 
             logger.debug("Event has been broken by global pre interceptor {}.", globalInterceptor.getClass());
             return;
         }
 
-        ChannelEventHandlerInterceptor handlerInterceptor = handlerInterceptors.get(in.getClass());
+        ChannelEventHandlerInterceptor handlerInterceptor = handlerInterceptors.get(eventClass);
 
-        if (!preHandle(channel, in, eventHandler, handlerInterceptor)) {
+        if (!preHandle(channel, channelEvent, eventHandler, handlerInterceptor)) {
 
             logger.debug("Event has been broken by pre interceptor {}.", handlerInterceptor.getClass());
             return;
@@ -94,27 +112,27 @@ public class DefaultChannelDispatcher implements ChannelDispatcher {
 
         if (eventHandler == null) {
 
-            logger.warn("Not found any event handlers for event {}.", in.getClass());
+            logger.warn("Not found any event handlers for event {}.", eventClass);
             return;
         }
 
         try {
 
-            ChannelEventResult result = eventHandler.onEvent(in);
+            ChannelEventResult result = eventHandler.onEvent(channelEvent);
 
-            if (!postHandle(channel, in, eventHandler, result, handlerInterceptor)) {
+            if (!postHandle(channel, channelEvent, eventHandler, result, handlerInterceptor)) {
 
                 logger.debug("Event has been broken by post interceptor {}.", handlerInterceptor.getClass());
                 return;
             }
 
-            if (!postHandle(channel, in, eventHandler, result, globalInterceptor)) {
+            if (!postHandle(channel, channelEvent, eventHandler, result, globalInterceptor)) {
 
                 logger.debug("Event has been broken by global post interceptor {}.", handlerInterceptor.getClass());
                 return;
             }
 
-            send(channel, result);
+            send(channel, in, result);
         } catch (Exception e) {
 
             logger.error(e.getMessage(), e);
@@ -131,8 +149,7 @@ public class DefaultChannelDispatcher implements ChannelDispatcher {
         try {
 
             long begin = System.currentTimeMillis();
-            @SuppressWarnings("unchecked")
-            boolean result = handlerInterceptor.preHandle(channel, in, eventHandler);
+            @SuppressWarnings("unchecked") boolean result = handlerInterceptor.preHandle(channel, in, eventHandler);
             logger.debug("Pre handler {} spent {}ms, event: {}", handlerInterceptor.getClass(), System.currentTimeMillis() - begin, in);
 
             return result;
@@ -155,8 +172,7 @@ public class DefaultChannelDispatcher implements ChannelDispatcher {
         try {
 
             long begin = System.currentTimeMillis();
-            @SuppressWarnings("unchecked")
-            boolean result = handlerInterceptor.postHandle(channel, in, eventHandler, eventResult);
+            @SuppressWarnings("unchecked") boolean result = handlerInterceptor.postHandle(channel, in, eventHandler, eventResult);
             logger.debug("Post handler {} spent {}ms, event: {}, result: {}", handlerInterceptor.getClass(), System.currentTimeMillis() - begin, in,
                          eventResult);
 
@@ -169,7 +185,7 @@ public class DefaultChannelDispatcher implements ChannelDispatcher {
         return false;
     }
 
-    private void send(Channel channel, ChannelEventResult result) throws IOException {
+    private void send(Channel channel, ChannelEvent in, ChannelEventResult result) throws IOException {
 
         if (result == null) {
 
@@ -184,6 +200,14 @@ public class DefaultChannelDispatcher implements ChannelDispatcher {
         }
 
         Object out = resultToMessageEncoder.encode(result);
+
+        if (in instanceof EnvelopeEvent) {
+
+            EnvelopeEvent envelopeEvent = (EnvelopeEvent)in;
+            //sender switch over to recipient, replay
+            out = new Envelope<>(out, envelopeEvent.getSender(), envelopeEvent.getRecipient());
+        }
+
         channel.send(out);
     }
 

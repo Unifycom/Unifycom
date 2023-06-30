@@ -1,11 +1,5 @@
 package io.unifycom.tcp.server;
 
-import io.unifycom.AbstractServerChannel;
-import io.unifycom.Channel;
-import io.unifycom.dispatch.ChannelDispatcher;
-import io.unifycom.netty.codec.InboundProxy2Decoder;
-import io.unifycom.netty.codec.NettyChannelDecoder;
-import io.unifycom.netty.codec.NettyChannelEncoder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelInitializer;
@@ -19,13 +13,19 @@ import io.netty.channel.socket.ServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import io.unifycom.AbstractServerChannel;
+import io.unifycom.Channel;
+import io.unifycom.codec.AbstractChannelDecoder;
+import io.unifycom.dispatch.ChannelDispatcher;
+import io.unifycom.netty.codec.InboundProxy2Decoder;
+import io.unifycom.netty.codec.NettyChannelDecoder;
+import io.unifycom.netty.codec.NettyChannelEncoder;
 import java.io.IOException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TcpServerChannel extends AbstractServerChannel {
 
@@ -49,7 +49,7 @@ public class TcpServerChannel extends AbstractServerChannel {
         this.config = config;
 
         this.channelDecoder = channelDecoder;
-        this.channelDecoder.setMaxInboundMessageSize(this.config.getMaxInboundMessageSize());
+        ((AbstractChannelDecoder)this.channelDecoder).setMaxInboundMessageSize(this.config.getMaxInboundMessageSize());
 
         this.channelEncoder = channelEncoder;
         this.channelDispatcher = channelDispatcher;
@@ -73,26 +73,27 @@ public class TcpServerChannel extends AbstractServerChannel {
         }
 
         bootstrap = new ServerBootstrap();
-        Class<? extends ServerSocketChannel> channelClass = (workerGroup instanceof EpollEventLoopGroup) ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
+        Class<? extends ServerSocketChannel> channelClass =
+            (workerGroup instanceof EpollEventLoopGroup) ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
 
         bootstrap.group(bossGroup, workerGroup).channel(channelClass).childOption(ChannelOption.SO_KEEPALIVE, true)
-                .childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-                .childHandler(new ChannelInitializer<SocketChannel>() {
+            .childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+            .childHandler(new ChannelInitializer<SocketChannel>() {
 
-                    @Override
-                    protected void initChannel(SocketChannel ch) throws Exception {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
 
-                        ch.pipeline().addLast(new InboundProxy2Decoder()).addLast(
-                                        new IdleStateHandler(config.getReaderIdleTimeSeconds(), config.getWriterIdleTimeSeconds(), config.getAllIdleTimeSeconds()))
-                                .addLast(channelEncoder.getMessageToByteEncoder()).addLast(channelDecoder.getByteToMessageDecoder());
+                    ch.pipeline().addLast(new InboundProxy2Decoder()).addLast(
+                            new IdleStateHandler(config.getReaderIdleTimeSeconds(), config.getWriterIdleTimeSeconds(), config.getAllIdleTimeSeconds()))
+                        .addLast(channelEncoder.getMessageToByteEncoder()).addLast(channelDecoder.getByteToMessageDecoder());
 
-                        if (channelDecoder.getMessageToMessageDecoder() != null) {
-                            ch.pipeline().addLast(channelDecoder.getMessageToMessageDecoder());
-                        }
-
-                        ch.pipeline().addLast(new TcpChannelInboundHandler(channelDispatcher, channelGroup));
+                    if (channelDecoder.getMessageToMessageDecoder() != null) {
+                        ch.pipeline().addLast(channelDecoder.getMessageToMessageDecoder());
                     }
-                });
+
+                    ch.pipeline().addLast(new TcpChannelInboundHandler(channelDispatcher, channelGroup));
+                }
+            });
 
         if (StringUtils.isEmpty(config.getHost())) {
             bootstrap.bind(config.getPort());

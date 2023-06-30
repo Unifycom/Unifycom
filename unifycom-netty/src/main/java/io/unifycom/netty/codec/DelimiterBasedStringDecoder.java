@@ -9,7 +9,7 @@ import io.netty.handler.codec.string.StringDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class DelimiterBasedStringDecoder extends NettyChannelDecoder {
+public class DelimiterBasedStringDecoder extends DefaultNettyChannelDecoder {
 
     private Charset charset;
 

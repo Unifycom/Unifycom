@@ -9,7 +9,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class StringToByteEncoder extends NettyChannelEncoder<String> {
+public class StringToByteEncoder extends DefaultNettyChannelEncoder<String> {
 
     private Charset charset;
 

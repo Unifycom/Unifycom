@@ -13,14 +13,15 @@ import io.unifycom.netty.channel.purejavacomm.PureJavaCommChannel;
 import io.unifycom.netty.channel.purejavacomm.PureJavaCommChannelConfig;
 import io.unifycom.netty.channel.purejavacomm.PureJavaCommDeviceAddress;
 import io.unifycom.netty.client.AbstractNettyChannel;
+import io.unifycom.netty.codec.DefaultNettyChannelDecoder;
+import io.unifycom.netty.codec.DefaultNettyChannelEncoder;
 import io.unifycom.netty.codec.NettyChannelDecoder;
 import io.unifycom.netty.codec.NettyChannelEncoder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("deprecation")
 public class RxtxChannel extends AbstractNettyChannel {
@@ -61,7 +62,7 @@ public class RxtxChannel extends AbstractNettyChannel {
     @Override
     public synchronized Channel connect() {
 
-        RxtxChannelConfig config = (RxtxChannelConfig) this.config;
+        RxtxChannelConfig config = (RxtxChannelConfig)this.config;
 
         if (isActive()) {
 
@@ -72,7 +73,7 @@ public class RxtxChannel extends AbstractNettyChannel {
         lock = new CountDownLatch(1);
         bootstrap = new Bootstrap();
 
-        bootstrap.group(WORKER_GROUP).channelFactory((ChannelFactory<PureJavaCommChannel>) () -> {
+        bootstrap.group(WORKER_GROUP).channelFactory((ChannelFactory<PureJavaCommChannel>)() -> {
 
             PureJavaCommChannel channel = new PureJavaCommChannel();
             channel.config().setBaudrate(config.getBaudrate());

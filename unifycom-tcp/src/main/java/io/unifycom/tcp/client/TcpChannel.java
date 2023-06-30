@@ -1,11 +1,5 @@
 package io.unifycom.tcp.client;
 
-import io.unifycom.Channel;
-import io.unifycom.dispatch.ChannelDispatcher;
-import io.unifycom.netty.client.AbstractNettyChannel;
-import io.unifycom.netty.codec.InboundProxy2Decoder;
-import io.unifycom.netty.codec.NettyChannelDecoder;
-import io.unifycom.netty.codec.NettyChannelEncoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelHandlerContext;
@@ -19,12 +13,18 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import io.unifycom.Channel;
+import io.unifycom.codec.AbstractChannelDecoder;
+import io.unifycom.dispatch.ChannelDispatcher;
+import io.unifycom.netty.client.AbstractNettyChannel;
+import io.unifycom.netty.codec.InboundProxy2Decoder;
+import io.unifycom.netty.codec.NettyChannelDecoder;
+import io.unifycom.netty.codec.NettyChannelEncoder;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TcpChannel extends AbstractNettyChannel {
 
@@ -48,7 +48,7 @@ public class TcpChannel extends AbstractNettyChannel {
         this.config = config;
 
         this.channelDecoder = channelDecoder;
-        this.channelDecoder.setMaxInboundMessageSize(config.getMaxInboundMessageSize());
+        ((AbstractChannelDecoder)this.channelDecoder).setMaxInboundMessageSize(config.getMaxInboundMessageSize());
 
         this.channelEncoder = channelEncoder;
         this.channelDispatcher = channelDispatcher;
@@ -74,34 +74,35 @@ public class TcpChannel extends AbstractNettyChannel {
 
         lock = new CountDownLatch(1);
         bootstrap = new Bootstrap();
-        TcpChannelConfig config = (TcpChannelConfig) this.config;
+        TcpChannelConfig config = (TcpChannelConfig)this.config;
 
-        Class<? extends SocketChannel> channelClass = (WORKER_GROUP instanceof EpollEventLoopGroup) ? EpollSocketChannel.class : NioSocketChannel.class;
+        Class<? extends SocketChannel> channelClass =
+            (WORKER_GROUP instanceof EpollEventLoopGroup) ? EpollSocketChannel.class : NioSocketChannel.class;
 
-        bootstrap.group(WORKER_GROUP).channel(channelClass).remoteAddress(config.getHost(), config.getPort())
-                .option(ChannelOption.SO_KEEPALIVE, true).option(ChannelOption.TCP_NODELAY, true)
-                .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT).handler(new ChannelInitializer<SocketChannel>() {
+        bootstrap.group(WORKER_GROUP).channel(channelClass).remoteAddress(config.getHost(), config.getPort()).option(ChannelOption.SO_KEEPALIVE, true)
+            .option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
+            .handler(new ChannelInitializer<SocketChannel>() {
 
-                    @Override
-                    public void initChannel(SocketChannel ch) {
+                @Override
+                public void initChannel(SocketChannel ch) {
 
-                        ch.pipeline().addLast(new InboundProxy2Decoder()).addLast(new IdleStateHandler(0, 0, config.getPingIntervalSeconds()) {
+                    ch.pipeline().addLast(new InboundProxy2Decoder()).addLast(new IdleStateHandler(0, 0, config.getPingIntervalSeconds()) {
 
-                            @Override
-                            public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+                        @Override
+                        public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
 
-                                ctx.channel().eventLoop().schedule(TcpChannel.this::connect0, config.getAutoConnectIntervalSeconds(), TimeUnit.SECONDS);
-                            }
-                        }).addLast(channelEncoder.getMessageToByteEncoder()).addLast(channelDecoder.getByteToMessageDecoder());
-
-                        if (channelDecoder.getMessageToMessageDecoder() != null) {
-
-                            ch.pipeline().addLast(channelDecoder.getMessageToMessageDecoder());
+                            ctx.channel().eventLoop().schedule(TcpChannel.this::connect0, config.getAutoConnectIntervalSeconds(), TimeUnit.SECONDS);
                         }
+                    }).addLast(channelEncoder.getMessageToByteEncoder()).addLast(channelDecoder.getByteToMessageDecoder());
 
-                        ch.pipeline().addLast(new TcpChannelInboundHandler(channelDispatcher, TcpChannel.this, ping));
+                    if (channelDecoder.getMessageToMessageDecoder() != null) {
+
+                        ch.pipeline().addLast(channelDecoder.getMessageToMessageDecoder());
                     }
-                });
+
+                    ch.pipeline().addLast(new TcpChannelInboundHandler(channelDispatcher, TcpChannel.this, ping));
+                }
+            });
 
         this.connect0();
 

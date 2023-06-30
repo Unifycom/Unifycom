@@ -1,17 +1,15 @@
 package io.unifycom.netty.client;
 
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.ChannelFutureListener;
 import io.unifycom.AbstractChannel;
 import io.unifycom.AbstractChannelConfig;
 import io.unifycom.Channel;
 import io.unifycom.Ping;
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelFutureListener;
-
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +62,7 @@ public abstract class AbstractNettyChannel extends AbstractChannel {
             return;
         }
 
-        bootstrap.connect().addListener((ChannelFutureListener) futureListener -> {
+        bootstrap.connect().addListener((ChannelFutureListener)futureListener -> {
 
             if (futureListener.isSuccess()) {
 
@@ -77,7 +75,9 @@ public abstract class AbstractNettyChannel extends AbstractChannel {
 
                 channel = futureListener.channel();
             } else {
-                logger.warn("{} is not active, try again after {}s.", getId(), config.getAutoConnectIntervalSeconds());
+
+                logger.warn("{} is not active, try again after {}s. {}.", getId(), config.getAutoConnectIntervalSeconds(),
+                            futureListener.cause().getMessage());
             }
         });
     }

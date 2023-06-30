@@ -13,12 +13,11 @@ import io.unifycom.netty.channel.bluetooth.OioBluetoothChannel;
 import io.unifycom.netty.client.AbstractNettyChannel;
 import io.unifycom.netty.codec.NettyChannelDecoder;
 import io.unifycom.netty.codec.NettyChannelEncoder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("deprecation")
 public class BluetoothChannel extends AbstractNettyChannel {
@@ -37,7 +36,8 @@ public class BluetoothChannel extends AbstractNettyChannel {
     private final NettyChannelDecoder channelDecoder;
     private final NettyChannelEncoder<?> channelEncoder;
 
-    public BluetoothChannel(BluetoothChannelConfig config, NettyChannelDecoder channelDecoder, NettyChannelEncoder<?> channelEncoder, ChannelDispatcher channelDispatcher) {
+    public BluetoothChannel(BluetoothChannelConfig config, NettyChannelDecoder channelDecoder, NettyChannelEncoder<?> channelEncoder,
+                            ChannelDispatcher channelDispatcher) {
 
         super.config = config;
 
@@ -58,7 +58,7 @@ public class BluetoothChannel extends AbstractNettyChannel {
     @Override
     public synchronized Channel connect() {
 
-        BluetoothChannelConfig config = (BluetoothChannelConfig) this.config;
+        BluetoothChannelConfig config = (BluetoothChannelConfig)this.config;
 
         if (isActive()) {
 
@@ -69,29 +69,30 @@ public class BluetoothChannel extends AbstractNettyChannel {
         lock = new CountDownLatch(1);
         bootstrap = new Bootstrap();
 
-        bootstrap.group(WORKER_GROUP).channel(OioBluetoothChannel.class).remoteAddress(
-                new BluetoothDeviceAddress(config.getConnectionString())).handler(new ChannelInitializer<OioBluetoothChannel>() {
+        bootstrap.group(WORKER_GROUP).channel(OioBluetoothChannel.class).remoteAddress(new BluetoothDeviceAddress(config.getConnectionString()))
+            .handler(new ChannelInitializer<OioBluetoothChannel>() {
 
-            @Override
-            public void initChannel(OioBluetoothChannel ch) {
+                @Override
+                public void initChannel(OioBluetoothChannel ch) {
 
-                ch.pipeline().addLast(new IdleStateHandler(0, 0, config.getPingIntervalSeconds()) {
+                    ch.pipeline().addLast(new IdleStateHandler(0, 0, config.getPingIntervalSeconds()) {
 
-                    @Override
-                    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+                        @Override
+                        public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
 
-                        ctx.channel().eventLoop().schedule(BluetoothChannel.super::connect0, config.getAutoConnectIntervalSeconds(), TimeUnit.SECONDS);
+                            ctx.channel().eventLoop()
+                                .schedule(BluetoothChannel.super::connect0, config.getAutoConnectIntervalSeconds(), TimeUnit.SECONDS);
+                        }
+                    }).addLast(channelEncoder.getMessageToByteEncoder()).addLast(channelDecoder.getByteToMessageDecoder());
+
+                    if (channelDecoder.getMessageToMessageDecoder() != null) {
+
+                        ch.pipeline().addLast(channelDecoder.getMessageToMessageDecoder());
                     }
-                }).addLast(channelEncoder.getMessageToByteEncoder()).addLast(channelDecoder.getByteToMessageDecoder());
 
-                if (channelDecoder.getMessageToMessageDecoder() != null) {
-
-                    ch.pipeline().addLast(channelDecoder.getMessageToMessageDecoder());
+                    ch.pipeline().addLast(new BluetoothChannelInboundHandler(channelDispatcher, BluetoothChannel.this, ping));
                 }
-
-                ch.pipeline().addLast(new BluetoothChannelInboundHandler(channelDispatcher, BluetoothChannel.this, ping));
-            }
-        });
+            });
 
         super.connect0();
 
