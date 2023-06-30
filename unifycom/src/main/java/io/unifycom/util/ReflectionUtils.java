@@ -1,5 +1,15 @@
 package io.unifycom.util;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import net.sf.cglib.beans.BeanCopier;
 import net.sf.cglib.core.Converter;
 import org.apache.commons.collections4.CollectionUtils;
@@ -8,12 +18,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.joor.Reflect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.*;
 
 public final class ReflectionUtils {
 
@@ -147,18 +151,39 @@ public final class ReflectionUtils {
             Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
 
             for (Type actualTypeArgument : actualTypeArguments) {
-                if (!(actualTypeArgument instanceof Class)) {
-                    continue;
+
+                if (actualTypeArgument instanceof ParameterizedType) {
+
+                    Type rawType = ((ParameterizedType)actualTypeArgument).getRawType();
+                    Class<T> actualClass = findActualClass(rawType, genericInterface);
+
+                    if (actualClass != null) {
+
+                        return actualClass;
+                    }
                 }
-                @SuppressWarnings("unchecked") Class<T> actualClass = (Class<T>)actualTypeArgument;
-                if (!genericInterface.isAssignableFrom(actualClass)) {
-                    continue;
-                }
-                return actualClass;
+
+                return findActualClass(actualTypeArgument, genericInterface);
             }
         }
 
         return null;
+    }
+
+    private static <T> Class<T> findActualClass(Type parameterizedType, Class<T> genericInterface) {
+
+        if (!(parameterizedType instanceof Class)) {
+
+            return null;
+        }
+
+        @SuppressWarnings("unchecked") Class<T> actualClass = (Class<T>)parameterizedType;
+        if (!genericInterface.isAssignableFrom(actualClass)) {
+
+            return null;
+        }
+
+        return actualClass;
     }
 
     private static List<Type> findGenericInterfaces(Class<?> clazz) {

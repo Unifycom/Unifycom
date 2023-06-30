@@ -7,7 +7,6 @@ import com.lmax.disruptor.dsl.ProducerType;
 import io.unifycom.Channel;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.BiConsumer;
-import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +24,7 @@ public class RingQueue implements Queue {
             throw new IllegalArgumentException("Ring queue capacity must be a power of 2.");
         }
 
-        queue = new Disruptor(Element::new, capacity, threadFactory, ProducerType.MULTI, new BlockingWaitStrategy());
+        queue = new Disruptor<>(Element::new, capacity, threadFactory, ProducerType.MULTI, new BlockingWaitStrategy());
 
         queue.handleEventsWith((element, sequence, endOfBatch) -> func.accept(element.getChannel(), element.getObject()));
         queue.setDefaultExceptionHandler(new ExceptionHandler<Element>() {
