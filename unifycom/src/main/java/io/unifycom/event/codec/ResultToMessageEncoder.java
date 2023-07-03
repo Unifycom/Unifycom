@@ -4,5 +4,5 @@ import io.unifycom.event.result.ChannelEventResult;
 
 public interface ResultToMessageEncoder<T> {
 
-    T encode(ChannelEventResult eventResult);
+    T encode(ChannelEventResult eventResult) throws Exception;
 }

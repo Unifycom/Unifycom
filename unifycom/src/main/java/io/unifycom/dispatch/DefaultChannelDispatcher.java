@@ -11,7 +11,6 @@ import io.unifycom.event.result.ChannelEventResult;
 import io.unifycom.event.result.NoReplyEventResult;
 import io.unifycom.interceptor.ChannelEventHandlerInterceptor;
 import io.unifycom.util.ReflectionUtils;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -63,14 +62,19 @@ public class DefaultChannelDispatcher implements ChannelDispatcher {
         ChannelEvent event = null;
         long begin = System.currentTimeMillis();
 
-        if (in instanceof Envelope) {
+        try {
+            if (in instanceof Envelope) {
 
-            Envelope envelope = (Envelope)in;
-            event = messageToEventDecoder.decode(envelope.getContent());
-            event = new EnvelopeEvent(event, envelope.getRecipient(), envelope.getSender());
-        } else {
+                Envelope envelope = (Envelope)in;
+                event = messageToEventDecoder.decode(envelope.getContent());
+                event = new EnvelopeEvent(event, envelope.getRecipient(), envelope.getSender());
+            } else {
 
-            event = messageToEventDecoder.decode(in);
+                event = messageToEventDecoder.decode(in);
+            }
+        } catch (Exception e) {
+
+            logger.error(e.getMessage(), e);
         }
 
         if (event != null) {
@@ -185,7 +189,7 @@ public class DefaultChannelDispatcher implements ChannelDispatcher {
         return false;
     }
 
-    private void send(Channel channel, ChannelEvent in, ChannelEventResult result) throws IOException {
+    private void send(Channel channel, ChannelEvent in, ChannelEventResult result) throws Exception {
 
         if (result == null) {
 

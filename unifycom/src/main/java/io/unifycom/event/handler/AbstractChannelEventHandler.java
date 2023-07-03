@@ -8,7 +8,7 @@ import io.unifycom.event.result.ChannelEventResult;
 public abstract class AbstractChannelEventHandler<E extends ChannelEvent> implements ChannelEventHandler<E> {
 
     @Override
-    public ChannelEventResult onEvent(E event) throws UnsupportedEventException {
+    public ChannelEventResult onEvent(E event) throws Exception {
 
         ChannelEventResult result = onEvent0(event);
         result.setSource(event);
@@ -16,5 +16,5 @@ public abstract class AbstractChannelEventHandler<E extends ChannelEvent> implem
         return result;
     }
 
-    public abstract ChannelEventResult onEvent0(E event) throws UnsupportedEventException;
+    public abstract ChannelEventResult onEvent0(E event) throws Exception;
 }

@@ -11,6 +11,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
@@ -66,16 +67,16 @@ public abstract class AbstractQueuableChannelDispatcher extends DefaultChannelDi
 
         this.queueCount = queueCount;
         this.queues = new ConcurrentHashMap<>(queueCount);
+        BiConsumer<Channel, Object> fireFunc = (c, o) -> super.fire(c, o);
 
         if (queueClass == RingQueue.class) {
 
-            queuesMappingFunction = k -> new RingQueue(threadFactory, (c, o) -> super.fire(c, o), queueCapacity);
+            queuesMappingFunction = k -> new RingQueue(threadFactory, fireFunc, queueCapacity);
         } else {
 
             executor = new ThreadPoolExecutor(0, queueCount, 1L, TimeUnit.HOURS, new SynchronousQueue<>(), threadFactory);
-            queuesMappingFunction = k -> new BlockingQueue(executor, (c, o) -> super.fire(c, o), queueCapacity);
+            queuesMappingFunction = k -> new BlockingQueue(executor, fireFunc, queueCapacity);
         }
-
     }
 
     @Override

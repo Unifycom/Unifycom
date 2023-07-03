@@ -6,5 +6,5 @@ import io.unifycom.event.result.ChannelEventResult;
 
 public interface ChannelEventHandler<E extends ChannelEvent> {
 
-    ChannelEventResult onEvent(E event) throws UnsupportedEventException;
+    ChannelEventResult onEvent(E event) throws Exception;
 }

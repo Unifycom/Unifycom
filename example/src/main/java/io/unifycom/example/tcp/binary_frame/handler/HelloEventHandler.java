@@ -1,19 +1,20 @@
 package io.unifycom.example.tcp.binary_frame.handler;
 
-import com.alibaba.fastjson2.JSON;
-import io.unifycom.event.exception.UnsupportedEventException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.unifycom.event.handler.AbstractChannelEventHandler;
 import io.unifycom.event.result.ChannelEventResult;
-import io.unifycom.example.tcp.binary_frame.event.HelloEventResult;
 import io.unifycom.example.tcp.binary_frame.event.HelloEvent;
+import io.unifycom.example.tcp.binary_frame.event.HelloEventResult;
 
 
 public class HelloEventHandler extends AbstractChannelEventHandler<HelloEvent> {
 
-    @Override
-    public ChannelEventResult onEvent0(HelloEvent event) throws UnsupportedEventException {
+    private final static ObjectMapper JSON = new ObjectMapper();
 
-        System.out.println("received: " + JSON.toJSONString(event));
+    @Override
+    public ChannelEventResult onEvent0(HelloEvent event) throws Exception {
+
+        System.out.println("received: " + JSON.writeValueAsString(event));
         return new HelloEventResult("reply: welcome " + event.getName());
     }
 }

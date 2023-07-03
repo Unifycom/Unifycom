@@ -4,5 +4,5 @@ import io.unifycom.event.ChannelEvent;
 
 public interface MessageToEventDecoder<T> {
 
-    ChannelEvent decode(T message);
+    ChannelEvent decode(T message) throws Exception;
 }
