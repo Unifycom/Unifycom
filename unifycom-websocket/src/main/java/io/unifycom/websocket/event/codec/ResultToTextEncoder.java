@@ -1,14 +1,16 @@
 package io.unifycom.websocket.event.codec;
 
-import com.alibaba.fastjson2.JSON;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.unifycom.event.codec.ResultToMessageEncoder;
 import io.unifycom.event.result.ChannelEventResult;
 
 public class ResultToTextEncoder implements ResultToMessageEncoder<String> {
 
-    @Override
-    public String encode(ChannelEventResult eventResult) {
+    private ObjectMapper JSON = new ObjectMapper();
 
-        return JSON.toJSONString(eventResult);
+    @Override
+    public String encode(ChannelEventResult eventResult) throws Exception {
+
+        return JSON.writeValueAsString(eventResult);
     }
 }
