@@ -1,8 +1,8 @@
 package io.unifycom.websocket.server;
 
+import io.undertow.websockets.core.WebSocketChannel;
 import io.unifycom.AbstractChannelGroup;
 import io.unifycom.Channel;
-import io.undertow.websockets.core.WebSocketChannel;
 import java.net.InetSocketAddress;
 
 import org.apache.commons.lang3.StringUtils;
