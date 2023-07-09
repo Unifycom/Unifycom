@@ -10,7 +10,7 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>unifycom-webscoket</artifactId>
+    <artifactId>unifycom-websocket</artifactId>
 
     <dependencies>
         <dependency>

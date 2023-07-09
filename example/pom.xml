@@ -35,7 +35,7 @@
         </dependency>
         <dependency>
             <groupId>io.github.unifycom</groupId>
-            <artifactId>unifycom-webscoket</artifactId>
+            <artifactId>unifycom-websocket</artifactId>
             <version>${project.version}</version>
         </dependency>
 
