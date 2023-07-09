@@ -50,7 +50,7 @@
 
     <properties>
 
-        <revision>1.0.0-SNAPSHOT</revision>
+        <revision>1.0.1-SNAPSHOT</revision>
 
         <charset>UTF-8</charset>
         <java.version>1.8</java.version>
