@@ -311,6 +311,9 @@
                     <docencoding>${charset}</docencoding>
                     <notimestamp>true</notimestamp>
                     <quiet>true</quiet>
+                    <additionalOptions>
+                        <additionalOption>-Xdoclint:none</additionalOption>
+                    </additionalOptions>
                 </configuration>
                 <executions>
                     <execution>
