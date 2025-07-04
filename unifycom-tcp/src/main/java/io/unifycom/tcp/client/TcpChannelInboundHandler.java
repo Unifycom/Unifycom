@@ -2,7 +2,7 @@ package io.unifycom.tcp.client;
 
 import io.unifycom.Ping;
 import io.unifycom.dispatch.ChannelDispatcher;
-import io.unifycom.netty.client.AbstractNettyChannelInboundHandler;
+import io.unifycom.socket.client.AbstractNettyChannelInboundHandler;
 import io.unifycom.Channel;
 
 public class TcpChannelInboundHandler extends AbstractNettyChannelInboundHandler {

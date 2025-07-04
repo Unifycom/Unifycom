@@ -10,7 +10,7 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>unifycom-netty</artifactId>
+    <artifactId>unifycom-socket</artifactId>
 
     <dependencies>
         <dependency>

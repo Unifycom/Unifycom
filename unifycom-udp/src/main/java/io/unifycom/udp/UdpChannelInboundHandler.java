@@ -9,8 +9,8 @@ import io.unifycom.dispatch.ChannelDispatcher;
 import io.unifycom.event.ConnectedEvent;
 import io.unifycom.event.DisconnectedEvent;
 import io.unifycom.event.IdleEvent;
-import io.unifycom.netty.codec.DefaultNettyChannelDecoder;
-import io.unifycom.netty.util.IdleUtils;
+import io.unifycom.socket.codec.DefaultNettyChannelDecoder;
+import io.unifycom.socket.util.IdleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,8 +1,8 @@
 package io.unifycom.tcp.server;
 
 import io.unifycom.dispatch.ChannelDispatcher;
-import io.unifycom.netty.server.AbstractNettyChannelGroup;
-import io.unifycom.netty.server.AbstractNettyChannelInboundHandler;
+import io.unifycom.socket.server.AbstractNettyChannelGroup;
+import io.unifycom.socket.server.AbstractNettyChannelInboundHandler;
 
 public class TcpChannelInboundHandler extends AbstractNettyChannelInboundHandler {
 

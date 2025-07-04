@@ -1,9 +1,9 @@
-package io.unifycom.netty;
+package io.unifycom.socket;
 
 
 import io.unifycom.AbstractChannelConfig;
 
-public abstract class AbstractNettyChannelConfig extends AbstractChannelConfig {
+public abstract class AbstractSocketChannelConfig extends AbstractChannelConfig {
 
     private int allIdleTimeSeconds = 0;
     private int readerIdleTimeSeconds = 0;
@@ -12,11 +12,11 @@ public abstract class AbstractNettyChannelConfig extends AbstractChannelConfig {
     private int maxInboundMessageSize = 0;
 
 
-    public AbstractNettyChannelConfig() {
+    public AbstractSocketChannelConfig() {
 
     }
 
-    public AbstractNettyChannelConfig(String connectionString) {
+    public AbstractSocketChannelConfig(String connectionString) {
 
         this.setConnectionString(connectionString);
     }

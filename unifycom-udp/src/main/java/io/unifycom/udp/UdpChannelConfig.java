@@ -4,10 +4,10 @@ package io.unifycom.udp;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.unifycom.netty.AbstractNettyChannelConfig;
+import io.unifycom.socket.AbstractSocketChannelConfig;
 import org.apache.commons.lang3.StringUtils;
 
-public class UdpChannelConfig extends AbstractNettyChannelConfig {
+public class UdpChannelConfig extends AbstractSocketChannelConfig {
 
     private int port;
     private String host;

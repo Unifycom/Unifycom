@@ -4,11 +4,11 @@ package io.unifycom.tcp.server;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.unifycom.netty.AbstractNettyChannelConfig;
+import io.unifycom.socket.AbstractSocketChannelConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
-public class TcpServerChannelConfig extends AbstractNettyChannelConfig {
+public class TcpServerChannelConfig extends AbstractSocketChannelConfig {
 
     private int port;
     private String host;

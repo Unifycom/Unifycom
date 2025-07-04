@@ -1,4 +1,4 @@
-package io.unifycom.netty.util;
+package io.unifycom.socket.util;
 
 import io.unifycom.event.IdleEvent;
 import io.netty.handler.timeout.IdleStateEvent;

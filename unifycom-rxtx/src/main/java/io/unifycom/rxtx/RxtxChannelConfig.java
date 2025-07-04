@@ -1,9 +1,9 @@
 package io.unifycom.rxtx;
 
-import io.unifycom.netty.AbstractNettyChannelConfig;
+import io.unifycom.socket.AbstractSocketChannelConfig;
 import org.apache.commons.lang3.StringUtils;
 
-public class RxtxChannelConfig extends AbstractNettyChannelConfig {
+public class RxtxChannelConfig extends AbstractSocketChannelConfig {
 
     private String port;
     private int baudrate;

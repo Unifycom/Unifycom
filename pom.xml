@@ -40,7 +40,7 @@
 
     <modules>
         <module>unifycom</module>
-        <module>unifycom-netty</module>
+        <module>unifycom-socket</module>
         <module>unifycom-tcp</module>
         <module>unifycom-udp</module>
         <module>unifycom-rxtx</module>
@@ -50,12 +50,12 @@
 
     <properties>
 
-        <revision>1.0.1-SNAPSHOT</revision>
+        <revision>1.1.0${changelist}</revision>
+        <changelist>-SNAPSHOT</changelist>
 
         <charset>UTF-8</charset>
-        <java.version>1.8</java.version>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <java.version>17</java.version>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>${charset}</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${charset}</project.reporting.outputEncoding>
 
@@ -95,7 +95,7 @@
             </dependency>
             <dependency>
                 <groupId>io.github.unifycom</groupId>
-                <artifactId>unifycom-netty</artifactId>
+                <artifactId>unifycom-socket</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

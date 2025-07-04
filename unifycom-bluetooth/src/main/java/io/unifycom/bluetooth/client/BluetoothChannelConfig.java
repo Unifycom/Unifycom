@@ -1,6 +1,6 @@
 package io.unifycom.bluetooth.client;
 
-import io.unifycom.netty.AbstractNettyChannelConfig;
+import io.unifycom.socket.AbstractSocketChannelConfig;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -8,7 +8,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class BluetoothChannelConfig extends AbstractNettyChannelConfig {
+public class BluetoothChannelConfig extends AbstractSocketChannelConfig {
 
     private String address;
     private int channel = 1;

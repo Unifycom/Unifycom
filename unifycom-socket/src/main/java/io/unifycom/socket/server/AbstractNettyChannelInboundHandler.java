@@ -1,12 +1,11 @@
-package io.unifycom.netty.client;
+package io.unifycom.socket.server;
 
 import io.unifycom.Channel;
-import io.unifycom.Ping;
 import io.unifycom.dispatch.ChannelDispatcher;
 import io.unifycom.event.ConnectedEvent;
 import io.unifycom.event.DisconnectedEvent;
 import io.unifycom.event.IdleEvent;
-import io.unifycom.netty.util.IdleUtils;
+import io.unifycom.socket.util.IdleUtils;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -17,19 +16,12 @@ public abstract class AbstractNettyChannelInboundHandler extends SimpleChannelIn
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractNettyChannelInboundHandler.class);
 
-    private Channel channel;
-    private final Ping ping;
+    private AbstractNettyChannelGroup nettyChannelGroup;
     private ChannelDispatcher channelDispatcher;
 
-    public AbstractNettyChannelInboundHandler(ChannelDispatcher channelEventDispatcher) {
+    public AbstractNettyChannelInboundHandler(ChannelDispatcher channelDispatcher, AbstractNettyChannelGroup nettyChannelGroup) {
 
-        this(channelEventDispatcher, null, null);
-    }
-
-    public AbstractNettyChannelInboundHandler(ChannelDispatcher channelDispatcher, Channel channel, Ping ping) {
-
-        this.ping = ping;
-        this.channel = channel;
+        this.nettyChannelGroup = nettyChannelGroup;
         this.channelDispatcher = channelDispatcher;
     }
 
@@ -38,7 +30,10 @@ public abstract class AbstractNettyChannelInboundHandler extends SimpleChannelIn
 
         super.channelActive(ctx);
 
-        logger.info("Connection of {} is active.", ctx.channel().remoteAddress());
+        Channel channel = new NettyChannel(ctx.channel());
+        nettyChannelGroup.put(channel);
+
+        logger.debug("Connection from {} is active.", ctx.channel().remoteAddress());
         ConnectedEvent event = new ConnectedEvent(ctx.channel().id().asShortText(), ctx.channel().remoteAddress().toString());
 
         channelDispatcher.fire(channel, event);
@@ -48,8 +43,9 @@ public abstract class AbstractNettyChannelInboundHandler extends SimpleChannelIn
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 
         super.channelInactive(ctx);
+        Channel channel = nettyChannelGroup.remove(ctx.channel());
 
-        logger.info("Connection of {} is inactive.", ctx.channel().remoteAddress());
+        logger.debug("Connection from {} is inactive.", ctx.channel().remoteAddress());
         DisconnectedEvent event = new DisconnectedEvent(ctx.channel().id().asShortText(), ctx.channel().remoteAddress().toString());
 
         channelDispatcher.fire(channel, event);
@@ -63,6 +59,7 @@ public abstract class AbstractNettyChannelInboundHandler extends SimpleChannelIn
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
+
         String info = String.format("%s threw exception.", ctx.channel().remoteAddress());
         logger.error(info, cause);
     }
@@ -72,7 +69,7 @@ public abstract class AbstractNettyChannelInboundHandler extends SimpleChannelIn
 
         if (channelDispatcher != null) {
 
-            channelDispatcher.fire(channel, in);
+            channelDispatcher.fire(nettyChannelGroup.get(ctx.channel()), in);
         }
     }
 
@@ -85,15 +82,9 @@ public abstract class AbstractNettyChannelInboundHandler extends SimpleChannelIn
 
             if (idleEvent != null) {
 
-                channelDispatcher.fire(channel, idleEvent);
-            }
-
-            if (ping != null) {
-
-                ctx.writeAndFlush(ping.ping()).get();
+                channelDispatcher.fire(nettyChannelGroup.get(ctx.channel()), idleEvent);
             }
         } else {
-
             super.userEventTriggered(ctx, evt);
         }
     }

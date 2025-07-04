@@ -1,4 +1,4 @@
-package io.unifycom.netty.codec;
+package io.unifycom.socket.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.ByteToMessageDecoder;

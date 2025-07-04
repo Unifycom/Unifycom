@@ -1,7 +1,7 @@
 package io.unifycom.tcp.server;
 
 
-import io.unifycom.netty.server.AbstractNettyChannelGroup;
+import io.unifycom.socket.server.AbstractNettyChannelGroup;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;

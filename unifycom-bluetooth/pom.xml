@@ -15,7 +15,7 @@
     <dependencies>
         <dependency>
             <groupId>io.github.unifycom</groupId>
-            <artifactId>unifycom-netty</artifactId>
+            <artifactId>unifycom-socket</artifactId>
         </dependency>
         <dependency>
             <groupId>io.github.unifycom</groupId>

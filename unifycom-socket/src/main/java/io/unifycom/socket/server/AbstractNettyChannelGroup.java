@@ -1,4 +1,4 @@
-package io.unifycom.netty.server;
+package io.unifycom.socket.server;
 
 import io.unifycom.Channel;
 import io.unifycom.AbstractChannelGroup;
