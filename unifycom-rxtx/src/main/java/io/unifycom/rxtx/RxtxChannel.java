@@ -12,9 +12,9 @@ import io.unifycom.dispatch.ChannelDispatcher;
 import io.unifycom.netty.channel.purejavacomm.PureJavaCommChannel;
 import io.unifycom.netty.channel.purejavacomm.PureJavaCommChannelConfig;
 import io.unifycom.netty.channel.purejavacomm.PureJavaCommDeviceAddress;
-import io.unifycom.socket.client.AbstractNettyChannel;
-import io.unifycom.socket.codec.NettyChannelDecoder;
-import io.unifycom.socket.codec.NettyChannelEncoder;
+import io.unifycom.socket.client.AbstractSocketChannel;
+import io.unifycom.socket.codec.SocketChannelDecoder;
+import io.unifycom.socket.codec.SocketChannelEncoder;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("deprecation")
-public class RxtxChannel extends AbstractNettyChannel {
+public class RxtxChannel extends AbstractSocketChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(RxtxChannel.class);
 
@@ -35,10 +35,10 @@ public class RxtxChannel extends AbstractNettyChannel {
         Runtime.getRuntime().addShutdownHook(new Thread(WORKER_GROUP::shutdownGracefully));
     }
 
-    private final NettyChannelDecoder channelDecoder;
-    private final NettyChannelEncoder<?> channelEncoder;
+    private final SocketChannelDecoder channelDecoder;
+    private final SocketChannelEncoder<?> channelEncoder;
 
-    public RxtxChannel(RxtxChannelConfig config, NettyChannelDecoder channelDecoder, NettyChannelEncoder<?> channelEncoder,
+    public RxtxChannel(RxtxChannelConfig config, SocketChannelDecoder channelDecoder, SocketChannelEncoder<?> channelEncoder,
                        ChannelDispatcher channelDispatcher) {
 
         super.config = config;

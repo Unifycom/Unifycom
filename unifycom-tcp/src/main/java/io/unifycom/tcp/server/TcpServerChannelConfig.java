@@ -13,7 +13,6 @@ public class TcpServerChannelConfig extends AbstractSocketChannelConfig {
     private int port;
     private String host;
 
-
     public TcpServerChannelConfig() {
 
     }

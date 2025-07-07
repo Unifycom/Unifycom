@@ -18,8 +18,8 @@ import io.unifycom.Channel;
 import io.unifycom.codec.AbstractChannelDecoder;
 import io.unifycom.dispatch.ChannelDispatcher;
 import io.unifycom.socket.codec.InboundProxy2Decoder;
-import io.unifycom.socket.codec.NettyChannelDecoder;
-import io.unifycom.socket.codec.NettyChannelEncoder;
+import io.unifycom.socket.codec.SocketChannelDecoder;
+import io.unifycom.socket.codec.SocketChannelEncoder;
 import java.io.IOException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,15 +35,15 @@ public class TcpServerChannel extends AbstractServerChannel {
     private final String id = TcpServerChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
 
     private TcpServerChannelConfig config;
-    private NettyChannelDecoder channelDecoder;
-    private NettyChannelEncoder<?> channelEncoder;
+    private SocketChannelDecoder channelDecoder;
+    private SocketChannelEncoder<?> channelEncoder;
 
     private ServerBootstrap bootstrap;
     private EventLoopGroup bossGroup = Epoll.isAvailable() ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
     private EventLoopGroup workerGroup = Epoll.isAvailable() ? new EpollEventLoopGroup() : new NioEventLoopGroup();
-    private TcpChannelGroup channelGroup = new TcpChannelGroup();
+    private TcpChannelHolder channelGroup = new TcpChannelHolder();
 
-    public TcpServerChannel(TcpServerChannelConfig config, NettyChannelDecoder channelDecoder, NettyChannelEncoder<?> channelEncoder,
+    public TcpServerChannel(TcpServerChannelConfig config, SocketChannelDecoder channelDecoder, SocketChannelEncoder<?> channelEncoder,
                             ChannelDispatcher channelDispatcher) {
 
         this.config = config;

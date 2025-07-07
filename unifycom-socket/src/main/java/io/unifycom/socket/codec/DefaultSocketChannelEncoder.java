@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.codec.MessageToMessageEncoder;
 
-public class DefaultNettyChannelEncoder<M> implements NettyChannelEncoder<M> {
+public class DefaultSocketChannelEncoder<M> implements SocketChannelEncoder<M> {
 
 
     @Override

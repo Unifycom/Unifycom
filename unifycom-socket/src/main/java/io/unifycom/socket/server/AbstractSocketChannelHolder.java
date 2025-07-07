@@ -1,13 +1,13 @@
 package io.unifycom.socket.server;
 
 import io.unifycom.Channel;
-import io.unifycom.AbstractChannelGroup;
+import io.unifycom.AbstractChannelHolder;
 
 import java.net.SocketAddress;
 
 import org.apache.commons.lang3.StringUtils;
 
-public abstract class AbstractNettyChannelGroup extends AbstractChannelGroup {
+public abstract class AbstractSocketChannelHolder extends AbstractChannelHolder {
 
     public Channel get(io.netty.channel.Channel channel) {
 
@@ -23,19 +23,20 @@ public abstract class AbstractNettyChannelGroup extends AbstractChannelGroup {
 
     private String generateKey(io.netty.channel.Channel channel) {
 
-        return generateKey(channel.remoteAddress());
+        return getKey(channel.remoteAddress());
     }
 
-    protected abstract String generateKey(SocketAddress socketAddress);
+    protected abstract String getKey(SocketAddress socketAddress);
 
-    public String generateKey(Channel channel) {
+    @Override
+    public String getKey(Channel channel) {
 
-        if (!(channel instanceof NettyChannel)) {
+        if (!(channel instanceof SocketChannel)) {
 
             return StringUtils.EMPTY;
         }
 
-        NettyChannel clientChannel = (NettyChannel) channel;
+        SocketChannel clientChannel = (SocketChannel) channel;
         io.netty.channel.Channel nettyChannel = clientChannel.channel();
 
         return generateKey(nettyChannel);

@@ -16,17 +16,17 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.unifycom.Channel;
 import io.unifycom.codec.AbstractChannelDecoder;
 import io.unifycom.dispatch.ChannelDispatcher;
-import io.unifycom.socket.client.AbstractNettyChannel;
+import io.unifycom.socket.client.AbstractSocketChannel;
 import io.unifycom.socket.codec.InboundProxy2Decoder;
-import io.unifycom.socket.codec.NettyChannelDecoder;
-import io.unifycom.socket.codec.NettyChannelEncoder;
+import io.unifycom.socket.codec.SocketChannelDecoder;
+import io.unifycom.socket.codec.SocketChannelEncoder;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TcpChannel extends AbstractNettyChannel {
+public class TcpChannel extends AbstractSocketChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(TcpChannel.class);
 
@@ -39,10 +39,10 @@ public class TcpChannel extends AbstractNettyChannel {
         Runtime.getRuntime().addShutdownHook(new Thread(WORKER_GROUP::shutdownGracefully));
     }
 
-    private NettyChannelDecoder channelDecoder;
-    private NettyChannelEncoder<?> channelEncoder;
+    private SocketChannelDecoder channelDecoder;
+    private SocketChannelEncoder<?> channelEncoder;
 
-    public TcpChannel(TcpChannelConfig config, NettyChannelDecoder channelDecoder, NettyChannelEncoder<?> channelEncoder,
+    public TcpChannel(TcpChannelConfig config, SocketChannelDecoder channelDecoder, SocketChannelEncoder<?> channelEncoder,
                       ChannelDispatcher channelDispatcher) {
 
         this.config = config;

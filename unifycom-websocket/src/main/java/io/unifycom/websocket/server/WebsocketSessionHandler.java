@@ -17,12 +17,12 @@ class WebsocketSessionHandler implements WebSocketConnectionCallback {
 
     private static final Logger logger = LoggerFactory.getLogger(WebsocketSessionHandler.class);
 
-    private WebsocketChannelGroup wsChannelGroup;
+    private WebsocketChannelHolder channelHolder;
     private ChannelDispatcher channelDispatcher;
 
-    public WebsocketSessionHandler(ChannelDispatcher channelDispatcher, WebsocketChannelGroup wsChannelGroup) {
+    public WebsocketSessionHandler(ChannelDispatcher channelDispatcher, WebsocketChannelHolder channelHolder) {
 
-        this.wsChannelGroup = wsChannelGroup;
+        this.channelHolder = channelHolder;
         this.channelDispatcher = channelDispatcher;
     }
 
@@ -30,7 +30,7 @@ class WebsocketSessionHandler implements WebSocketConnectionCallback {
     public void onConnect(WebSocketHttpExchange exchange, WebSocketChannel wsChannel) {
 
         Channel wsClientChannel = new WebsocketClientChannel(wsChannel);
-        wsChannelGroup.put(wsClientChannel);
+        channelHolder.put(wsClientChannel);
 
         ConnectedEvent event = new ConnectedEvent(wsChannel.toString(), wsChannel.getSourceAddress().toString());
         logger.debug("Connection from {} is active.", event.getRemoteAddress());
@@ -48,7 +48,7 @@ class WebsocketSessionHandler implements WebSocketConnectionCallback {
             @Override
             protected void onCloseMessage(CloseMessage closeMessage, WebSocketChannel wsChannel) {
 
-                Channel wsClientChannel = wsChannelGroup.remove(wsChannel);
+                Channel wsClientChannel = channelHolder.remove(wsChannel);
 
                 DisconnectedEvent event = new DisconnectedEvent(wsChannel.toString(), wsChannel.getSourceAddress().toString());
                 logger.debug("Connection from {} is inactive.", event.getRemoteAddress());

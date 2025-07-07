@@ -8,7 +8,7 @@ import io.unifycom.Envelope;
 import java.util.List;
 import java.util.function.Function;
 
-public abstract class AbstractNettyDatagramChannelDecoder<M> extends DefaultNettyChannelDecoder {
+public abstract class AbstractSocketDatagramChannelDecoder<M> extends DefaultSocketChannelDecoder {
 
     @Override
     public MessageToMessageDecoder<DatagramPacket> getMessageToMessageDecoder() {

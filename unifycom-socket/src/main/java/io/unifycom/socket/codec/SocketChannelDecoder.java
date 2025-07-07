@@ -5,7 +5,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import io.unifycom.codec.ChannelDecoder;
 
-public interface NettyChannelDecoder extends ChannelDecoder {
+public interface SocketChannelDecoder extends ChannelDecoder {
 
     <M> M decode(ByteBuf in);
 

@@ -11,7 +11,6 @@ public abstract class AbstractSocketChannelConfig extends AbstractChannelConfig 
 
     private int maxInboundMessageSize = 0;
 
-
     public AbstractSocketChannelConfig() {
 
     }

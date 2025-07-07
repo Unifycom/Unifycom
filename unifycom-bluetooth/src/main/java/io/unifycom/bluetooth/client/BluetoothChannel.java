@@ -10,9 +10,9 @@ import io.unifycom.Channel;
 import io.unifycom.dispatch.ChannelDispatcher;
 import io.unifycom.netty.channel.bluetooth.BluetoothDeviceAddress;
 import io.unifycom.netty.channel.bluetooth.OioBluetoothChannel;
-import io.unifycom.socket.client.AbstractNettyChannel;
-import io.unifycom.socket.codec.NettyChannelDecoder;
-import io.unifycom.socket.codec.NettyChannelEncoder;
+import io.unifycom.socket.client.AbstractSocketChannel;
+import io.unifycom.socket.codec.SocketChannelDecoder;
+import io.unifycom.socket.codec.SocketChannelEncoder;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("deprecation")
-public class BluetoothChannel extends AbstractNettyChannel {
+public class BluetoothChannel extends AbstractSocketChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(BluetoothChannel.class);
 
@@ -33,10 +33,10 @@ public class BluetoothChannel extends AbstractNettyChannel {
         Runtime.getRuntime().addShutdownHook(new Thread(WORKER_GROUP::shutdownGracefully));
     }
 
-    private final NettyChannelDecoder channelDecoder;
-    private final NettyChannelEncoder<?> channelEncoder;
+    private final SocketChannelDecoder channelDecoder;
+    private final SocketChannelEncoder<?> channelEncoder;
 
-    public BluetoothChannel(BluetoothChannelConfig config, NettyChannelDecoder channelDecoder, NettyChannelEncoder<?> channelEncoder,
+    public BluetoothChannel(BluetoothChannelConfig config, SocketChannelDecoder channelDecoder, SocketChannelEncoder<?> channelEncoder,
                             ChannelDispatcher channelDispatcher) {
 
         super.config = config;

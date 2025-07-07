@@ -24,7 +24,7 @@ public class WebsocketServerChannel extends AbstractServerChannel {
     private final String id = WebsocketServerChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
 
     private Undertow undertow;
-    private WebsocketChannelGroup wsChannelGroup;
+    private WebsocketChannelHolder channelHolder;
 
     private WebsocketServerChannelConfig config;
     private AbstractTextToEventDecoder textToEventDecoder;
@@ -34,7 +34,7 @@ public class WebsocketServerChannel extends AbstractServerChannel {
         this.config = config;
         this.textToEventDecoder = textToEventDecoder;
 
-        this.wsChannelGroup = new WebsocketChannelGroup();
+        this.channelHolder = new WebsocketChannelHolder();
         this.channelDispatcher = new DefaultChannelDispatcher(textToEventDecoder, new ResultToTextEncoder());
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
@@ -56,7 +56,7 @@ public class WebsocketServerChannel extends AbstractServerChannel {
         }
 
         undertow = Undertow.builder().addHttpListener(config.getPort(), config.getHost())
-            .setHandler(path().addPrefixPath(config.getPath(), websocket(new WebsocketSessionHandler(channelDispatcher, wsChannelGroup)))).build();
+            .setHandler(path().addPrefixPath(config.getPath(), websocket(new WebsocketSessionHandler(channelDispatcher, channelHolder)))).build();
 
         undertow.start();
 
@@ -99,6 +99,6 @@ public class WebsocketServerChannel extends AbstractServerChannel {
     @Override
     public Channel getClient(String channelName) {
 
-        return wsChannelGroup.getByName(channelName);
+        return channelHolder.getByName(channelName);
     }
 }

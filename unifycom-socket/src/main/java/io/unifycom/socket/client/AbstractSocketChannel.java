@@ -14,9 +14,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractNettyChannel extends AbstractChannel {
+public abstract class AbstractSocketChannel extends AbstractChannel {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractNettyChannel.class);
+    private static final Logger logger = LoggerFactory.getLogger(AbstractSocketChannel.class);
 
     protected Ping ping;
     protected CountDownLatch lock;

@@ -9,7 +9,7 @@ import io.unifycom.dispatch.ChannelDispatcher;
 import io.unifycom.event.ConnectedEvent;
 import io.unifycom.event.DisconnectedEvent;
 import io.unifycom.event.IdleEvent;
-import io.unifycom.socket.codec.DefaultNettyChannelDecoder;
+import io.unifycom.socket.codec.DefaultSocketChannelDecoder;
 import io.unifycom.socket.util.IdleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,7 @@ public class UdpChannelInboundHandler extends SimpleChannelInboundHandler<Object
     private Channel channel;
     private final Ping ping;
     private ChannelDispatcher channelDispatcher;
-    private DefaultNettyChannelDecoder channelDecoder;
+    private DefaultSocketChannelDecoder channelDecoder;
 
     public UdpChannelInboundHandler(ChannelDispatcher channelEventDispatcher) {
 

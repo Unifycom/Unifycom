@@ -17,9 +17,9 @@ import io.unifycom.Channel;
 import io.unifycom.Envelope;
 import io.unifycom.codec.AbstractChannelDecoder;
 import io.unifycom.dispatch.ChannelDispatcher;
-import io.unifycom.socket.client.AbstractNettyChannel;
-import io.unifycom.socket.codec.NettyChannelDecoder;
-import io.unifycom.socket.codec.NettyChannelEncoder;
+import io.unifycom.socket.client.AbstractSocketChannel;
+import io.unifycom.socket.codec.SocketChannelDecoder;
+import io.unifycom.socket.codec.SocketChannelEncoder;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -30,7 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UdpChannel extends AbstractNettyChannel {
+public class UdpChannel extends AbstractSocketChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(UdpChannel.class);
 
@@ -43,10 +43,10 @@ public class UdpChannel extends AbstractNettyChannel {
         Runtime.getRuntime().addShutdownHook(new Thread(WORKER_GROUP::shutdownGracefully));
     }
 
-    private NettyChannelDecoder channelDecoder;
-    private NettyChannelEncoder<?> channelEncoder;
+    private SocketChannelDecoder channelDecoder;
+    private SocketChannelEncoder<?> channelEncoder;
 
-    public UdpChannel(UdpChannelConfig config, NettyChannelDecoder channelDecoder, NettyChannelEncoder<?> channelEncoder,
+    public UdpChannel(UdpChannelConfig config, SocketChannelDecoder channelDecoder, SocketChannelEncoder<?> channelEncoder,
                       ChannelDispatcher channelDispatcher) {
 
         this.config = config;

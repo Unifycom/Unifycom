@@ -1,11 +1,12 @@
 package io.unifycom.tcp.client;
 
+import io.unifycom.Channel;
 import io.unifycom.Ping;
 import io.unifycom.dispatch.ChannelDispatcher;
-import io.unifycom.socket.client.AbstractNettyChannelInboundHandler;
-import io.unifycom.Channel;
+import io.unifycom.socket.client.AbstractSocketChannelInboundHandler;
 
-public class TcpChannelInboundHandler extends AbstractNettyChannelInboundHandler {
+public class TcpChannelInboundHandler extends AbstractSocketChannelInboundHandler {
+
     public TcpChannelInboundHandler(ChannelDispatcher channelEventDispatcher) {
 
         super(channelEventDispatcher);

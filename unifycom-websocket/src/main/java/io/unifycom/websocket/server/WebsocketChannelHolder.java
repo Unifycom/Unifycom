@@ -1,13 +1,13 @@
 package io.unifycom.websocket.server;
 
 import io.undertow.websockets.core.WebSocketChannel;
-import io.unifycom.AbstractChannelGroup;
+import io.unifycom.AbstractChannelHolder;
 import io.unifycom.Channel;
 import java.net.InetSocketAddress;
 
 import org.apache.commons.lang3.StringUtils;
 
-class WebsocketChannelGroup extends AbstractChannelGroup {
+class WebsocketChannelHolder extends AbstractChannelHolder {
 
     public Channel get(WebSocketChannel channel) {
 
@@ -31,7 +31,7 @@ class WebsocketChannelGroup extends AbstractChannelGroup {
         return socketAddress.getAddress().getHostAddress() + ":" + socketAddress.getPort();
     }
 
-    public String generateKey(Channel channel) {
+    public String getKey(Channel channel) {
 
         if (!(channel instanceof WebsocketClientChannel)) {
 

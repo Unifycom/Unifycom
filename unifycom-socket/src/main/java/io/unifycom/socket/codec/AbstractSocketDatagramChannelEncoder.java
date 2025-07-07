@@ -7,7 +7,7 @@ import io.netty.handler.codec.MessageToMessageEncoder;
 import java.util.List;
 import java.util.function.Function;
 
-public abstract class AbstractNettyDatagramChannelEncoder<M> extends DefaultNettyChannelEncoder<M> {
+public abstract class AbstractSocketDatagramChannelEncoder<M> extends DefaultSocketChannelEncoder<M> {
 
     @Override
     public MessageToMessageEncoder getMessageToMessageEncoder() {
