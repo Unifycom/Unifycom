@@ -1,28 +1,28 @@
 package io.unifycom.example.tcp.binary_frame.codec;
 
-import io.unifycom.example.tcp.binary_frame.exception.UnsupportedProtocolException;
-import io.unifycom.example.tcp.binary_frame.protocol.InboundHelloMessage;
-import io.unifycom.example.tcp.binary_frame.protocol.Instruction;
-import io.unifycom.example.tcp.binary_frame.protocol.Message;
-import io.unifycom.netty.codec.DefaultNettyChannelDecoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.util.ReferenceCountUtil;
+import io.unifycom.example.tcp.binary_frame.exception.UnsupportedProtocolException;
+import io.unifycom.example.tcp.binary_frame.protocol.InboundHelloMessage;
+import io.unifycom.example.tcp.binary_frame.protocol.Instruction;
+import io.unifycom.example.tcp.binary_frame.protocol.Message;
+import io.unifycom.socket.codec.DefaultSocketChannelDecoder;
 
-public class TcpChannelInboundDecoder extends DefaultNettyChannelDecoder {
+public class TcpChannelInboundDecoder extends DefaultSocketChannelDecoder {
 
     @Override
     public ByteToMessageDecoder getByteToMessageDecoder() {
 
         return new LengthFieldBasedFrameDecoder(Message.MAX_LENGTH, Message.LENGTH_OF_STX + Message.LENGTH_OF_INS,
-                                                Message.LENGTH_OF_LEN, Message.LENGTH_OF_ETX, 0, true) {
+                Message.LENGTH_OF_LEN, Message.LENGTH_OF_ETX, 0, true) {
 
             @Override
             protected Object decode(ChannelHandlerContext ctx, ByteBuf in) throws Exception {
 
-                ByteBuf decoded = (ByteBuf)super.decode(ctx, in);
+                ByteBuf decoded = (ByteBuf) super.decode(ctx, in);
 
                 if (decoded == null) {
 

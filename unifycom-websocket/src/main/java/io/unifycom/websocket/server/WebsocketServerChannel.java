@@ -41,12 +41,6 @@ public class WebsocketServerChannel extends AbstractServerChannel {
     }
 
     @Override
-    public String getId() {
-
-        return this.id;
-    }
-
-    @Override
     public synchronized AbstractServerChannel startup() {
 
         if (undertow != null) {
@@ -60,7 +54,7 @@ public class WebsocketServerChannel extends AbstractServerChannel {
 
         undertow.start();
 
-        logger.info("{} server is listening on {} ...... ", getId(), config.getConnectionString());
+        logger.info("{} server is listening on {} ...... ", getName(), config.getConnectionString());
 
         return this;
     }
@@ -85,7 +79,7 @@ public class WebsocketServerChannel extends AbstractServerChannel {
     @Override
     public Future<Void> send(String channelName, Object out) throws IOException {
 
-        Channel ch = getClient(channelName);
+        Channel ch = getChannel(channelName);
 
         if (ch == null) {
 
@@ -97,7 +91,7 @@ public class WebsocketServerChannel extends AbstractServerChannel {
     }
 
     @Override
-    public Channel getClient(String channelName) {
+    public Channel getChannel(String channelName) {
 
         return channelHolder.getByName(channelName);
     }

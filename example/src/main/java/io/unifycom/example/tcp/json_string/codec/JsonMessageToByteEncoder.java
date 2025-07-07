@@ -5,12 +5,13 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import io.unifycom.netty.codec.DefaultNettyChannelEncoder;
+import io.unifycom.socket.codec.DefaultSocketChannelEncoder;
+
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class JsonMessageToByteEncoder extends DefaultNettyChannelEncoder<Object> {
+public class JsonMessageToByteEncoder extends DefaultSocketChannelEncoder<Object> {
 
     private final static ObjectMapper JSON = new ObjectMapper();
 

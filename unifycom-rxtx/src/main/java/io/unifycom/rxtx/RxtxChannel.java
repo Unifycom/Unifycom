@@ -52,19 +52,13 @@ public class RxtxChannel extends AbstractSocketChannel {
     }
 
     @Override
-    public String getId() {
-
-        return this.id;
-    }
-
-    @Override
     public synchronized Channel connect() {
 
         RxtxChannelConfig config = (RxtxChannelConfig)this.config;
 
         if (isActive()) {
 
-            logger.warn("{} is active, don't connect it again.", getId());
+            logger.warn("{} is active, don't connect it again.", getName());
             return this;
         }
 
@@ -104,7 +98,7 @@ public class RxtxChannel extends AbstractSocketChannel {
 
         super.connect0();
 
-        logger.info("{} client is connecting to {} ...... ", getId(), config.getConnectionString());
+        logger.info("{} client is connecting to {} ...... ", getName(), config.getConnectionString());
 
         return this;
     }

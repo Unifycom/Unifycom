@@ -12,8 +12,8 @@ import io.unifycom.example.bluetooth.simple_string.handler.HelloEventHandler;
 import io.unifycom.example.bluetooth.simple_string.handler.IdleEventHandler;
 import io.unifycom.example.tcp.simple_string.interceptor.GlobalEventHandlerInterceptor;
 import io.unifycom.example.tcp.simple_string.interceptor.HelloEventHandlerInterceptor;
-import io.unifycom.netty.codec.DelimiterBasedStringDecoder;
-import io.unifycom.netty.codec.StringToByteEncoder;
+import io.unifycom.socket.codec.DelimiterBasedStringDecoder;
+import io.unifycom.socket.codec.StringToByteEncoder;
 import org.apache.commons.io.Charsets;
 
 import java.io.IOException;

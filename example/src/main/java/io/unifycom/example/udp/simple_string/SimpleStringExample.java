@@ -12,12 +12,13 @@ import io.unifycom.example.udp.simple_string.handler.HelloEventHandler;
 import io.unifycom.example.udp.simple_string.handler.IdleEventHandler;
 import io.unifycom.example.udp.simple_string.interceptor.GlobalEventHandlerInterceptor;
 import io.unifycom.example.udp.simple_string.interceptor.HelloEventHandlerInterceptor;
-import io.unifycom.netty.codec.AbstractNettyDatagramChannelDecoder;
-import io.unifycom.netty.codec.AbstractNettyDatagramChannelEncoder;
-import io.unifycom.netty.codec.NettyChannelDecoder;
-import io.unifycom.netty.codec.NettyChannelEncoder;
+import io.unifycom.socket.codec.AbstractSocketDatagramChannelDecoder;
+import io.unifycom.socket.codec.AbstractSocketDatagramChannelEncoder;
+import io.unifycom.socket.codec.SocketChannelDecoder;
+import io.unifycom.socket.codec.SocketChannelEncoder;
 import io.unifycom.udp.UdpChannel;
 import io.unifycom.udp.UdpChannelConfig;
+
 import java.nio.charset.StandardCharsets;
 
 public class SimpleStringExample {
@@ -25,7 +26,7 @@ public class SimpleStringExample {
 
     public static void main(String[] args) throws InterruptedException {
 
-        NettyChannelEncoder encoder = new AbstractNettyDatagramChannelEncoder<String>() {
+        SocketChannelEncoder encoder = new AbstractSocketDatagramChannelEncoder<String>() {
 
             @Override
             public ByteBuf encode(String out) {
@@ -34,7 +35,7 @@ public class SimpleStringExample {
             }
         };
 
-        NettyChannelDecoder decoder = new AbstractNettyDatagramChannelDecoder<String>() {
+        SocketChannelDecoder decoder = new AbstractSocketDatagramChannelDecoder<String>() {
 
             public String decode(ByteBuf in) {
 

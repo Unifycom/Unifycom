@@ -46,7 +46,7 @@ public abstract class AbstractSocketChannel extends AbstractChannel {
 
         channel = null;
         bootstrap = null;
-        logger.info("{}{} has been closed.", getId(), StringUtils.isNotBlank(getName()) ? ("[" + getName() + "]") : StringUtils.EMPTY);
+        logger.info("{}{} has been closed.", getName(), StringUtils.isNotBlank(getName()) ? ("[" + getName() + "]") : StringUtils.EMPTY);
     }
 
     @Override
@@ -76,7 +76,7 @@ public abstract class AbstractSocketChannel extends AbstractChannel {
                 channel = futureListener.channel();
             } else {
 
-                logger.warn("{} is not active, try again after {}s. {}.", getId(), config.getAutoConnectIntervalSeconds(),
+                logger.warn("{} is not active, try again after {}s. {}.", getName(), config.getAutoConnectIntervalSeconds(),
                             futureListener.cause().getMessage());
             }
         });

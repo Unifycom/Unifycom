@@ -6,8 +6,8 @@ import io.unifycom.socket.server.AbstractSocketChannelInboundHandler;
 
 public class TcpChannelInboundHandler extends AbstractSocketChannelInboundHandler {
 
-    public TcpChannelInboundHandler(ChannelDispatcher channelDispatcher, AbstractSocketChannelHolder nettyChannelGroup) {
+    public TcpChannelInboundHandler(ChannelDispatcher channelDispatcher, AbstractSocketChannelHolder channelHolder) {
 
-        super(channelDispatcher, nettyChannelGroup);
+        super(channelDispatcher, channelHolder);
     }
 }

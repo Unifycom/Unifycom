@@ -61,7 +61,7 @@ public class BluetoothTest {
         ld.getDiscoveryAgent().startInquiry(DiscoveryAgent.GIAC, discoveryListener);
 
 
-        Thread.sleep(1000 * 60 * 1);
+//        Thread.sleep(1000 * 60 * 1);
 
 //        RemoteDevice[] remoteDevices = ld.getDiscoveryAgent().retrieveDevices(DiscoveryAgent.PREKNOWN);
 

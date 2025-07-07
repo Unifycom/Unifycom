@@ -9,11 +9,10 @@ import io.unifycom.example.tcp.simple_string.handler.HelloEventHandler;
 import io.unifycom.example.tcp.simple_string.handler.IdleEventHandler;
 import io.unifycom.example.tcp.simple_string.interceptor.GlobalEventHandlerInterceptor;
 import io.unifycom.example.tcp.simple_string.interceptor.HelloEventHandlerInterceptor;
-import io.unifycom.netty.codec.DelimiterBasedStringDecoder;
-import io.unifycom.netty.codec.StringToByteEncoder;
+import io.unifycom.socket.codec.DelimiterBasedStringDecoder;
+import io.unifycom.socket.codec.StringToByteEncoder;
 import io.unifycom.tcp.client.TcpChannel;
 import io.unifycom.tcp.client.TcpChannelConfig;
-
 
 import java.nio.charset.StandardCharsets;
 

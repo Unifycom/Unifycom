@@ -7,14 +7,14 @@ import org.apache.commons.lang3.StringUtils;
 
 public abstract class AbstractChannel implements Channel {
 
-    private String name;
+    private String name = ChannelNameGenerator.generate(this.getClass());
 
     protected ChannelDispatcher channelDispatcher;
 
     @Override
     public String getName() {
 
-        return StringUtils.defaultIfEmpty(this.name, getId());
+        return this.name;
     }
 
     @Override

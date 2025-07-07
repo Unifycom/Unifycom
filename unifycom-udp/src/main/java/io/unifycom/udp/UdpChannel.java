@@ -34,9 +34,6 @@ public class UdpChannel extends AbstractSocketChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(UdpChannel.class);
 
-    private static final AtomicInteger COUNTER = new AtomicInteger(0);
-    private final String id = UdpChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
-
     protected static final EventLoopGroup WORKER_GROUP = Epoll.isAvailable() ? new EpollEventLoopGroup() : new NioEventLoopGroup();
 
     static {
@@ -61,18 +58,11 @@ public class UdpChannel extends AbstractSocketChannel {
     }
 
     @Override
-    public String getId() {
-
-        return this.id;
-    }
-
-
-    @Override
     public synchronized Channel connect() {
 
         if (isActive()) {
 
-            logger.warn("{} is active, don't connect it again.", getId());
+            logger.warn("{} is active, don't connect it again.", getName());
             return this;
         }
 

@@ -11,29 +11,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SocketChannel extends AbstractChannel {
+public class SessionSocketChannel extends AbstractChannel {
 
-    private static final Logger logger = LoggerFactory.getLogger(SocketChannel.class);
+    private static final Logger logger = LoggerFactory.getLogger(SessionSocketChannel.class);
 
     private static final AtomicInteger COUNTER = new AtomicInteger(0);
-    private final String id = SocketChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
+    private final String id = SessionSocketChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
 
     private io.netty.channel.Channel channel;
 
-    public SocketChannel(io.netty.channel.Channel channel) {
+    public SessionSocketChannel(io.netty.channel.Channel channel) {
 
         this.channel = channel;
     }
 
-    public io.netty.channel.Channel channel() {
+    public io.netty.channel.Channel getChannel() {
 
         return this.channel;
-    }
-
-    @Override
-    public String getId() {
-
-        return this.id;
     }
 
     @Override
@@ -44,7 +38,7 @@ public class SocketChannel extends AbstractChannel {
             channel.close().syncUninterruptibly();
         }
 
-        logger.info("{}[{}] has been closed.", getName(), getId());
+        logger.info("{} has been closed.", getName());
     }
 
     @Override
@@ -59,7 +53,7 @@ public class SocketChannel extends AbstractChannel {
         if (channel != null) {
 
             SocketAddress address = channel.remoteAddress();
-            logger.warn("{}[{}] of {} is client side connection, cannot connect it on server side.", getId(), getName(), address);
+            logger.warn("{} of {} is client side connection, cannot connect it on server side.", getName(), address);
         }
 
         return this;

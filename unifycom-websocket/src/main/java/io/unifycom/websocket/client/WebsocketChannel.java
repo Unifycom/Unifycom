@@ -58,12 +58,6 @@ public class WebsocketChannel extends AbstractChannel {
     }
 
     @Override
-    public String getId() {
-
-        return this.id;
-    }
-
-    @Override
     public synchronized void close() {
 
         DisconnectedEvent disconnectedEvent = null;
@@ -83,7 +77,7 @@ public class WebsocketChannel extends AbstractChannel {
                 disconnectedEvent = new DisconnectedEvent(wsChannel.toString(), wsChannel.getSourceAddress().toString());
             } catch (IOException e) {
 
-                logger.error("Closing " + getId() + " failed.", e);
+                logger.error("Closing " + getName() + " failed.", e);
             }
         }
 
@@ -102,7 +96,7 @@ public class WebsocketChannel extends AbstractChannel {
 
         wsChannel = null;
 
-        logger.info("{}{} has been closed.", getId(), StringUtils.isNotBlank(getName()) ? ("[" + getName() + "]") : StringUtils.EMPTY);
+        logger.info("{}{} has been closed.", getName(), StringUtils.isNotBlank(getName()) ? ("[" + getName() + "]") : StringUtils.EMPTY);
     }
 
     @Override
@@ -116,7 +110,7 @@ public class WebsocketChannel extends AbstractChannel {
 
         if (isActive()) {
 
-            logger.warn("{} is active, don't connect it again.", getId());
+            logger.warn("{} is active, don't connect it again.", getName());
             return this;
         }
 
@@ -132,7 +126,7 @@ public class WebsocketChannel extends AbstractChannel {
                 config.getAutoConnectIntervalSeconds(), config.getAutoConnectIntervalSeconds(),
                 TimeUnit.SECONDS);
 
-        logger.info("{} client is connecting to {} ...... ", getId(), config.getConnectionString());
+        logger.info("{} client is connecting to {} ...... ", getName(), config.getConnectionString());
 
         return this;
     }
@@ -157,7 +151,7 @@ public class WebsocketChannel extends AbstractChannel {
 
         if (status != Status.DONE) {
 
-            logger.warn("{} is not active, try again after {}s.", getId(), config.getAutoConnectIntervalSeconds());
+            logger.warn("{} is not active, try again after {}s.", getName(), config.getAutoConnectIntervalSeconds());
         }
     }
 

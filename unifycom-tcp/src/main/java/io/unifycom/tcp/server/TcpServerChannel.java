@@ -31,9 +31,6 @@ public class TcpServerChannel extends AbstractServerChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(TcpServerChannel.class);
 
-    private static final AtomicInteger COUNTER = new AtomicInteger(0);
-    private final String id = TcpServerChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
-
     private TcpServerChannelConfig config;
     private SocketChannelDecoder channelDecoder;
     private SocketChannelEncoder<?> channelEncoder;
@@ -41,7 +38,7 @@ public class TcpServerChannel extends AbstractServerChannel {
     private ServerBootstrap bootstrap;
     private EventLoopGroup bossGroup = Epoll.isAvailable() ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
     private EventLoopGroup workerGroup = Epoll.isAvailable() ? new EpollEventLoopGroup() : new NioEventLoopGroup();
-    private TcpChannelHolder channelGroup = new TcpChannelHolder();
+    private TcpChannelHolder channelHolder = new TcpChannelHolder();
 
     public TcpServerChannel(TcpServerChannelConfig config, SocketChannelDecoder channelDecoder, SocketChannelEncoder<?> channelEncoder,
                             ChannelDispatcher channelDispatcher) {
@@ -55,12 +52,6 @@ public class TcpServerChannel extends AbstractServerChannel {
         this.channelDispatcher = channelDispatcher;
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
-    }
-
-    @Override
-    public String getId() {
-
-        return this.id;
     }
 
     @Override
@@ -91,7 +82,7 @@ public class TcpServerChannel extends AbstractServerChannel {
                         ch.pipeline().addLast(channelDecoder.getMessageToMessageDecoder());
                     }
 
-                    ch.pipeline().addLast(new TcpChannelInboundHandler(channelDispatcher, channelGroup));
+                    ch.pipeline().addLast(new TcpChannelInboundHandler(channelDispatcher, channelHolder));
                 }
             });
 
@@ -115,7 +106,7 @@ public class TcpServerChannel extends AbstractServerChannel {
     @Override
     public Future<Void> send(String channelName, Object out) throws IOException {
 
-        Channel ch = getClient(channelName);
+        Channel ch = getChannel(channelName);
 
         if (ch == null) {
 
@@ -127,15 +118,15 @@ public class TcpServerChannel extends AbstractServerChannel {
     }
 
     @Override
-    public Channel getClient(String channelName) {
+    public Channel getChannel(String channelName) {
 
-        return channelGroup.getByName(channelName);
+        return channelHolder.getByName(channelName);
     }
 
     @Override
     public void shutdown() {
 
-        channelGroup.all().forEach(Channel::close);
+        channelHolder.all().forEach(Channel::close);
 
         if (workerGroup != null) {
 

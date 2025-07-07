@@ -4,44 +4,33 @@ package io.unifycom;
 import io.unifycom.dispatch.ChannelDispatcher;
 import io.unifycom.event.handler.ChannelEventHandler;
 import io.unifycom.interceptor.ChannelEventHandlerInterceptor;
-import java.io.IOException;
-import java.util.concurrent.Future;
-import org.apache.commons.lang3.StringUtils;
 
-public abstract class AbstractServerChannel {
+public abstract class AbstractServerChannel implements ServerChannel {
 
-    private String name;
+    private String name = ChannelNameGenerator.generate(this.getClass());
 
     protected ChannelDispatcher channelDispatcher;
 
-    public abstract String getId();
-
+    @Override
     public String getName() {
 
-        return StringUtils.defaultIfBlank(this.name, getId());
+        return this.name;
     }
 
+    @Override
     public void setName(String name) {
 
         this.name = name;
     }
 
-    public abstract AbstractServerChannel startup();
-
-    public abstract void shutdown();
-
-    public abstract boolean isReady();
-
-    public abstract Future<Void> send(String channelName, Object out) throws IOException;
-
-    public abstract Channel getClient(String channelName);
-
+    @Override
     public AbstractServerChannel addLast(ChannelEventHandler<?> eventHandler) {
 
         channelDispatcher.addLast(eventHandler);
         return this;
     }
 
+    @Override
     public AbstractServerChannel addLast(ChannelEventHandler<?>... eventHandlers) {
 
         for (ChannelEventHandler<?> eventHandler : eventHandlers) {
@@ -52,12 +41,14 @@ public abstract class AbstractServerChannel {
         return this;
     }
 
+    @Override
     public AbstractServerChannel addLast(ChannelEventHandlerInterceptor<?> eventHandlerInterceptor) {
 
         channelDispatcher.addLast(eventHandlerInterceptor);
         return this;
     }
 
+    @Override
     public AbstractServerChannel addLast(ChannelEventHandlerInterceptor<?>... eventHandlerInterceptors) {
 
         for (ChannelEventHandlerInterceptor<?> eventHandlerInterceptor : eventHandlerInterceptors) {

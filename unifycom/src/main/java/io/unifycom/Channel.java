@@ -6,8 +6,6 @@ import java.util.concurrent.TimeUnit;
 
 public interface Channel {
 
-    String getId();
-
     String getName();
 
     void setName(String name);

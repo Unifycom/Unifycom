@@ -37,12 +37,6 @@ class WebsocketClientChannel extends AbstractChannel {
     }
 
     @Override
-    public String getId() {
-
-        return this.id;
-    }
-
-    @Override
     public String getName() {
 
         return  Objects.toString(channel.getAttribute(ATTR_CHANNEL_NAME), StringUtils.EMPTY);
@@ -69,7 +63,7 @@ class WebsocketClientChannel extends AbstractChannel {
             }
         }
 
-        logger.info("{}[{}] has been closed.", getName(), getId());
+        logger.info("{}[{}] has been closed.", getName(), getName());
     }
 
     @Override
@@ -84,7 +78,7 @@ class WebsocketClientChannel extends AbstractChannel {
         if (channel != null) {
 
             InetSocketAddress address = channel.getSourceAddress();
-            logger.warn("{}[{}] of {}:{} is client side connection, cannot connect it on server side.", getId(), getName(), address.getHostString(),
+            logger.warn("{} of {}:{} is client side connection, cannot connect it on server side.", getName(), address.getHostString(),
                         address.getPort());
         }
 

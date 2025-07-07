@@ -1,16 +1,16 @@
 package io.unifycom.example.tcp.json_string.codec;
 
 import io.unifycom.example.tcp.json_string.protocol.codec.InboundJsonToMessageDecoder;
-import io.unifycom.netty.codec.DefaultNettyChannelDecoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.MessageToMessageDecoder;
+import io.unifycom.socket.codec.DefaultSocketChannelDecoder;
 
 import java.nio.charset.Charset;
 
-public class DelimiterBasedJsonDecoder extends DefaultNettyChannelDecoder {
+public class DelimiterBasedJsonDecoder extends DefaultSocketChannelDecoder {
 
     private Charset charset;
 

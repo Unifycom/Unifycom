@@ -31,13 +31,13 @@ public abstract class AbstractSocketChannelHolder extends AbstractChannelHolder 
     @Override
     public String getKey(Channel channel) {
 
-        if (!(channel instanceof SocketChannel)) {
+        if (!(channel instanceof SessionSocketChannel)) {
 
             return StringUtils.EMPTY;
         }
 
-        SocketChannel clientChannel = (SocketChannel) channel;
-        io.netty.channel.Channel nettyChannel = clientChannel.channel();
+        SessionSocketChannel clientChannel = (SessionSocketChannel) channel;
+        io.netty.channel.Channel nettyChannel = clientChannel.getChannel();
 
         return generateKey(nettyChannel);
     }
