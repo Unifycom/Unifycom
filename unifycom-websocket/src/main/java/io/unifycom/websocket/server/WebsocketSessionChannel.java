@@ -15,18 +15,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class WebsocketClientChannel extends AbstractChannel {
+class WebsocketSessionChannel extends AbstractChannel {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebsocketClientChannel.class);
+    private static final Logger logger = LoggerFactory.getLogger(WebsocketSessionChannel.class);
 
     private static final AtomicInteger COUNTER = new AtomicInteger(0);
-    private final String id = WebsocketClientChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
+    private final String id = WebsocketSessionChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
 
     private final WebSocketChannel channel;
 
     private static final String ATTR_CHANNEL_NAME = "X_ATTR.CHANNEL_NAME";
 
-    public WebsocketClientChannel(WebSocketChannel channel) {
+    public WebsocketSessionChannel(WebSocketChannel channel) {
 
         this.channel = channel;
     }

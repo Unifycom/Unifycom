@@ -211,7 +211,7 @@ public class WebsocketChannel extends AbstractChannel {
         }
 
         WebSockets.sendText(out.toString(), wsChannel, null);
-
+        
         return null;
     }
 }

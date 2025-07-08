@@ -11,16 +11,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SessionSocketChannel extends AbstractChannel {
+public class SocketSessionChannel extends AbstractChannel {
 
-    private static final Logger logger = LoggerFactory.getLogger(SessionSocketChannel.class);
+    private static final Logger logger = LoggerFactory.getLogger(SocketSessionChannel.class);
 
     private static final AtomicInteger COUNTER = new AtomicInteger(0);
-    private final String id = SessionSocketChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
+    private final String id = SocketSessionChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
 
     private io.netty.channel.Channel channel;
 
-    public SessionSocketChannel(io.netty.channel.Channel channel) {
+    public SocketSessionChannel(io.netty.channel.Channel channel) {
 
         this.channel = channel;
     }

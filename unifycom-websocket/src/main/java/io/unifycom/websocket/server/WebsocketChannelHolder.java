@@ -33,12 +33,12 @@ class WebsocketChannelHolder extends AbstractChannelHolder {
 
     public String getKey(Channel channel) {
 
-        if (!(channel instanceof WebsocketClientChannel)) {
+        if (!(channel instanceof WebsocketSessionChannel)) {
 
             return StringUtils.EMPTY;
         }
 
-        WebsocketClientChannel wsClientChannel = (WebsocketClientChannel)channel;
+        WebsocketSessionChannel wsClientChannel = (WebsocketSessionChannel)channel;
         WebSocketChannel wsChannel = wsClientChannel.channel();
 
         return generateKey(wsChannel);

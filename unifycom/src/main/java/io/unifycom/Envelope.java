@@ -4,17 +4,17 @@ public class Envelope<M, A> {
 
     private M content;
     private A sender;
-    private A recipient;
+    private A receiver;
 
-    public Envelope(M content, A recipient) {
+    public Envelope(M content, A receiver) {
 
-        this(content, recipient, null);
+        this(content, receiver, null);
     }
 
-    public Envelope(M content, A recipient, A sender) {
+    public Envelope(M content, A receiver, A sender) {
 
         this.content = content;
-        this.recipient = recipient;
+        this.receiver = receiver;
         this.sender = sender;
     }
 
@@ -38,19 +38,19 @@ public class Envelope<M, A> {
         this.sender = sender;
     }
 
-    public A getRecipient() {
+    public A getReceiver() {
 
-        return recipient;
+        return receiver;
     }
 
-    public void setRecipient(A recipient) {
+    public void setReceiver(A receiver) {
 
-        this.recipient = recipient;
+        this.receiver = receiver;
     }
 
     @Override
     public String toString() {
 
-        return String.format("[%s, SENDER = %s, RECIPIENT = %s]", content, sender, recipient);
+        return String.format("[%s, SENDER = %s, RECEIVER = %s]", content, sender, receiver);
     }
 }

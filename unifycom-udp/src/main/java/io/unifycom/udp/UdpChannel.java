@@ -98,7 +98,7 @@ public class UdpChannel extends AbstractSocketChannel {
         if (out instanceof Envelope) {
 
             Envelope envelope = (Envelope)out;
-            out = new DefaultAddressedEnvelope<>(envelope.getContent(), (SocketAddress)envelope.getRecipient(), (SocketAddress)envelope.getSender());
+            out = new DefaultAddressedEnvelope<>(envelope.getContent(), (SocketAddress)envelope.getReceiver(), (SocketAddress)envelope.getSender());
         }
 
         return super.send(out);

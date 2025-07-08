@@ -1,14 +1,11 @@
 package io.unifycom.websocket.server;
 
+import io.undertow.websockets.core.*;
 import io.unifycom.Channel;
 import io.unifycom.dispatch.ChannelDispatcher;
 import io.unifycom.event.ConnectedEvent;
 import io.unifycom.event.DisconnectedEvent;
 import io.undertow.websockets.WebSocketConnectionCallback;
-import io.undertow.websockets.core.AbstractReceiveListener;
-import io.undertow.websockets.core.BufferedTextMessage;
-import io.undertow.websockets.core.CloseMessage;
-import io.undertow.websockets.core.WebSocketChannel;
 import io.undertow.websockets.spi.WebSocketHttpExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +26,7 @@ class WebsocketSessionHandler implements WebSocketConnectionCallback {
     @Override
     public void onConnect(WebSocketHttpExchange exchange, WebSocketChannel wsChannel) {
 
-        Channel wsClientChannel = new WebsocketClientChannel(wsChannel);
+        Channel wsClientChannel = new WebsocketSessionChannel(wsChannel);
         channelHolder.put(wsClientChannel);
 
         ConnectedEvent event = new ConnectedEvent(wsChannel.toString(), wsChannel.getSourceAddress().toString());
@@ -41,6 +38,12 @@ class WebsocketSessionHandler implements WebSocketConnectionCallback {
 
             @Override
             protected void onFullTextMessage(WebSocketChannel wsChannel, BufferedTextMessage message) {
+
+                channelDispatcher.fire(wsClientChannel, message.getData());
+            }
+
+            @Override
+            protected void onFullBinaryMessage(WebSocketChannel wsChannel, BufferedBinaryMessage message) {
 
                 channelDispatcher.fire(wsClientChannel, message.getData());
             }

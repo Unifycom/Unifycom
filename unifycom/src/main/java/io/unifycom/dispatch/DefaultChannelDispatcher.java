@@ -67,7 +67,7 @@ public class DefaultChannelDispatcher implements ChannelDispatcher {
 
                 Envelope envelope = (Envelope)in;
                 event = messageToEventDecoder.decode(envelope.getContent());
-                event = new EnvelopeEvent(event, envelope.getRecipient(), envelope.getSender());
+                event = new EnvelopeEvent(event, envelope.getReceiver(), envelope.getSender());
             } else {
 
                 event = messageToEventDecoder.decode(in);
@@ -209,7 +209,7 @@ public class DefaultChannelDispatcher implements ChannelDispatcher {
 
             EnvelopeEvent envelopeEvent = (EnvelopeEvent)in;
             //sender switch over to recipient, replay
-            out = new Envelope<>(out, envelopeEvent.getSender(), envelopeEvent.getRecipient());
+            out = new Envelope<>(out, envelopeEvent.getSender(), envelopeEvent.getReceiver());
         }
 
         channel.send(out);

@@ -30,7 +30,7 @@ public abstract class AbstractSocketChannelInboundHandler extends SimpleChannelI
 
         super.channelActive(ctx);
 
-        Channel channel = new SessionSocketChannel(ctx.channel());
+        Channel channel = new SocketSessionChannel(ctx.channel());
         channelHolder.put(channel);
 
         logger.debug("Connection from {} is active.", ctx.channel().remoteAddress());

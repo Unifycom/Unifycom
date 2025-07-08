@@ -6,6 +6,7 @@ import io.unifycom.socket.client.AbstractSocketChannelInboundHandler;
 import io.unifycom.Channel;
 
 public class RxtxChannelInboundHandler extends AbstractSocketChannelInboundHandler {
+
     public RxtxChannelInboundHandler(ChannelDispatcher channelEventDispatcher) {
 
         super(channelEventDispatcher);
