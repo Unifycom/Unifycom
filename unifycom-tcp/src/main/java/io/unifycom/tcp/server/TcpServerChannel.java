@@ -16,10 +16,10 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.unifycom.AbstractServerChannel;
 import io.unifycom.Channel;
 import io.unifycom.codec.AbstractChannelDecoder;
-import io.unifycom.dispatch.ChannelDispatcher;
-import io.unifycom.socket.codec.InboundProxy2Decoder;
-import io.unifycom.socket.codec.SocketChannelDecoder;
-import io.unifycom.socket.codec.SocketChannelEncoder;
+import io.unifycom.dispatch.Dispatcher;
+import io.unifycom.netty.codec.ProxyProtocolV2Handler;
+import io.unifycom.netty.codec.NettyChannelDecoder;
+import io.unifycom.netty.codec.NettyChannelEncoder;
 import java.io.IOException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,16 +32,16 @@ public class TcpServerChannel extends AbstractServerChannel {
     private static final Logger logger = LoggerFactory.getLogger(TcpServerChannel.class);
 
     private TcpServerChannelConfig config;
-    private SocketChannelDecoder channelDecoder;
-    private SocketChannelEncoder<?> channelEncoder;
+    private NettyChannelDecoder channelDecoder;
+    private NettyChannelEncoder<?> channelEncoder;
 
     private ServerBootstrap bootstrap;
     private EventLoopGroup bossGroup = Epoll.isAvailable() ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
     private EventLoopGroup workerGroup = Epoll.isAvailable() ? new EpollEventLoopGroup() : new NioEventLoopGroup();
-    private TcpChannelHolder channelHolder = new TcpChannelHolder();
+    private TcpChannelRegistry channelHolder = new TcpChannelRegistry();
 
-    public TcpServerChannel(TcpServerChannelConfig config, SocketChannelDecoder channelDecoder, SocketChannelEncoder<?> channelEncoder,
-                            ChannelDispatcher channelDispatcher) {
+    public TcpServerChannel(TcpServerChannelConfig config, NettyChannelDecoder channelDecoder, NettyChannelEncoder<?> channelEncoder,
+                            Dispatcher channelDispatcher) {
 
         this.config = config;
 
@@ -74,7 +74,7 @@ public class TcpServerChannel extends AbstractServerChannel {
                 @Override
                 protected void initChannel(SocketChannel ch) throws Exception {
 
-                    ch.pipeline().addLast(new InboundProxy2Decoder()).addLast(
+                    ch.pipeline().addLast(new ProxyProtocolV2Handler()).addLast(
                             new IdleStateHandler(config.getReaderIdleTimeSeconds(), config.getWriterIdleTimeSeconds(), config.getAllIdleTimeSeconds()))
                         .addLast(channelEncoder.getMessageToByteEncoder()).addLast(channelDecoder.getByteToMessageDecoder());
 

@@ -9,9 +9,9 @@ import io.unifycom.example.tcp.binary_frame.exception.UnsupportedProtocolExcepti
 import io.unifycom.example.tcp.binary_frame.protocol.InboundHelloMessage;
 import io.unifycom.example.tcp.binary_frame.protocol.Instruction;
 import io.unifycom.example.tcp.binary_frame.protocol.Message;
-import io.unifycom.socket.codec.DefaultSocketChannelDecoder;
+import io.unifycom.netty.codec.DefaultNettyChannelDecoder;
 
-public class TcpChannelInboundDecoder extends DefaultSocketChannelDecoder {
+public class TcpChannelInboundDecoder extends DefaultNettyChannelDecoder {
 
     @Override
     public ByteToMessageDecoder getByteToMessageDecoder() {

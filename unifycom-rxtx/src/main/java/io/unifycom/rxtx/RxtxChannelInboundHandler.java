@@ -1,18 +1,18 @@
 package io.unifycom.rxtx;
 
 import io.unifycom.Ping;
-import io.unifycom.dispatch.ChannelDispatcher;
-import io.unifycom.socket.client.AbstractSocketChannelInboundHandler;
+import io.unifycom.dispatch.Dispatcher;
+import io.unifycom.netty.client.AbstractSocketChannelInboundHandler;
 import io.unifycom.Channel;
 
 public class RxtxChannelInboundHandler extends AbstractSocketChannelInboundHandler {
 
-    public RxtxChannelInboundHandler(ChannelDispatcher channelEventDispatcher) {
+    public RxtxChannelInboundHandler(Dispatcher channelEventDispatcher) {
 
         super(channelEventDispatcher);
     }
 
-    public RxtxChannelInboundHandler(ChannelDispatcher channelDispatcher, Channel channel, Ping ping) {
+    public RxtxChannelInboundHandler(Dispatcher channelDispatcher, Channel channel, Ping ping) {
 
         super(channelDispatcher, channel, ping);
     }

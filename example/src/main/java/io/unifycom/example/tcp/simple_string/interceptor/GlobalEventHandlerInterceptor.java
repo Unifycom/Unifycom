@@ -4,12 +4,12 @@ import io.unifycom.Channel;
 import io.unifycom.event.ChannelEvent;
 import io.unifycom.event.handler.ChannelEventHandler;
 import io.unifycom.event.result.ChannelEventResult;
-import io.unifycom.interceptor.ChannelEventHandlerInterceptor;
+import io.unifycom.interceptor.EventHandlerInterceptor;
 import io.unifycom.interceptor.InterceptedResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GlobalEventHandlerInterceptor implements ChannelEventHandlerInterceptor<ChannelEvent> {
+public class GlobalEventHandlerInterceptor implements EventHandlerInterceptor<ChannelEvent> {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalEventHandlerInterceptor.class);
 

@@ -3,17 +3,17 @@ package io.unifycom.example.bluetooth.simple_string;
 
 import io.unifycom.bluetooth.client.BluetoothChannel;
 import io.unifycom.bluetooth.client.BluetoothChannelConfig;
-import io.unifycom.dispatch.DefaultChannelDispatcher;
-import io.unifycom.example.bluetooth.simple_string.event.codec.MyMessageToEventDecoder;
-import io.unifycom.example.bluetooth.simple_string.event.codec.MyResultToMessageEncoder;
+import io.unifycom.dispatch.DefaultDispatcher;
+import io.unifycom.example.bluetooth.simple_string.event.codec.GreetingEventDecoder;
+import io.unifycom.example.bluetooth.simple_string.event.codec.GreetingResultEncoder;
 import io.unifycom.example.bluetooth.simple_string.handler.ConnectedEventHandler;
 import io.unifycom.example.bluetooth.simple_string.handler.DisconnectedEventHandler;
-import io.unifycom.example.bluetooth.simple_string.handler.HelloEventHandler;
+import io.unifycom.example.bluetooth.simple_string.handler.GreetingEventHandler;
 import io.unifycom.example.bluetooth.simple_string.handler.IdleEventHandler;
 import io.unifycom.example.tcp.simple_string.interceptor.GlobalEventHandlerInterceptor;
-import io.unifycom.example.tcp.simple_string.interceptor.HelloEventHandlerInterceptor;
-import io.unifycom.socket.codec.DelimiterBasedStringDecoder;
-import io.unifycom.socket.codec.StringToByteEncoder;
+import io.unifycom.example.tcp.simple_string.interceptor.GreetingEventHandlerInterceptor;
+import io.unifycom.netty.codec.DelimiterBasedStringDecoder;
+import io.unifycom.netty.codec.StringToByteEncoder;
 import org.apache.commons.io.Charsets;
 
 import java.io.IOException;
@@ -27,16 +27,16 @@ public class SimpleStringExample {
         StringToByteEncoder encoder = new StringToByteEncoder(Charsets.toCharset("GB2312"));
         DelimiterBasedStringDecoder decoder = new DelimiterBasedStringDecoder(1000, "/", StandardCharsets.UTF_8);
 
-        MyMessageToEventDecoder eventDecoder = new MyMessageToEventDecoder();
-        MyResultToMessageEncoder resultEncoder = new MyResultToMessageEncoder();
-        DefaultChannelDispatcher dispatcher = new DefaultChannelDispatcher(eventDecoder, resultEncoder);
+        GreetingEventDecoder eventDecoder = new GreetingEventDecoder();
+        GreetingResultEncoder resultEncoder = new GreetingResultEncoder();
+        DefaultDispatcher dispatcher = new DefaultDispatcher(eventDecoder, resultEncoder);
 
         BluetoothChannelConfig config = new BluetoothChannelConfig("btspp://000878439229:1;authenticate=false;encrypt=false;master=false");
 
         BluetoothChannel channel = new BluetoothChannel(config, decoder, encoder, dispatcher);
 
-        channel.addLast(new HelloEventHandler(), new ConnectedEventHandler(), new DisconnectedEventHandler(), new IdleEventHandler());
-        channel.addLast(new HelloEventHandlerInterceptor(), new GlobalEventHandlerInterceptor());
+        channel.addLast(new GreetingEventHandler(), new ConnectedEventHandler(), new DisconnectedEventHandler(), new IdleEventHandler());
+        channel.addLast(new GreetingEventHandlerInterceptor(), new GlobalEventHandlerInterceptor());
 
         channel.connect().blockUntilConnected();
 

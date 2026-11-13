@@ -15,11 +15,11 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.unifycom.Channel;
 import io.unifycom.codec.AbstractChannelDecoder;
-import io.unifycom.dispatch.ChannelDispatcher;
-import io.unifycom.socket.client.AbstractSocketChannel;
-import io.unifycom.socket.codec.InboundProxy2Decoder;
-import io.unifycom.socket.codec.SocketChannelDecoder;
-import io.unifycom.socket.codec.SocketChannelEncoder;
+import io.unifycom.dispatch.Dispatcher;
+import io.unifycom.netty.client.AbstractSocketChannel;
+import io.unifycom.netty.codec.ProxyProtocolV2Handler;
+import io.unifycom.netty.codec.NettyChannelDecoder;
+import io.unifycom.netty.codec.NettyChannelEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,11 +36,11 @@ public class TcpChannel extends AbstractSocketChannel {
         Runtime.getRuntime().addShutdownHook(new Thread(WORKER_GROUP::shutdownGracefully));
     }
 
-    private SocketChannelDecoder channelDecoder;
-    private SocketChannelEncoder<?> channelEncoder;
+    private NettyChannelDecoder channelDecoder;
+    private NettyChannelEncoder<?> channelEncoder;
 
-    public TcpChannel(TcpChannelConfig config, SocketChannelDecoder channelDecoder, SocketChannelEncoder<?> channelEncoder,
-                      ChannelDispatcher channelDispatcher) {
+    public TcpChannel(TcpChannelConfig config, NettyChannelDecoder channelDecoder, NettyChannelEncoder<?> channelEncoder,
+                      Dispatcher channelDispatcher) {
 
         this.config = config;
 
@@ -76,7 +76,7 @@ public class TcpChannel extends AbstractSocketChannel {
                     @Override
                     public void initChannel(SocketChannel ch) {
 
-                        ch.pipeline().addLast(new InboundProxy2Decoder()).addLast(new IdleStateHandler(0, 0, config.getPingIntervalSeconds()) {
+                        ch.pipeline().addLast(new ProxyProtocolV2Handler()).addLast(new IdleStateHandler(0, 0, config.getPingIntervalSeconds()) {
 
                             @Override
                             public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {

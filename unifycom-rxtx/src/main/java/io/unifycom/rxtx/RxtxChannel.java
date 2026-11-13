@@ -8,13 +8,13 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.oio.OioEventLoopGroup;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.unifycom.Channel;
-import io.unifycom.dispatch.ChannelDispatcher;
+import io.unifycom.dispatch.Dispatcher;
 import io.unifycom.netty.channel.purejavacomm.PureJavaCommChannel;
 import io.unifycom.netty.channel.purejavacomm.PureJavaCommChannelConfig;
 import io.unifycom.netty.channel.purejavacomm.PureJavaCommDeviceAddress;
-import io.unifycom.socket.client.AbstractSocketChannel;
-import io.unifycom.socket.codec.SocketChannelDecoder;
-import io.unifycom.socket.codec.SocketChannelEncoder;
+import io.unifycom.netty.client.AbstractSocketChannel;
+import io.unifycom.netty.codec.NettyChannelDecoder;
+import io.unifycom.netty.codec.NettyChannelEncoder;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,11 +35,11 @@ public class RxtxChannel extends AbstractSocketChannel {
         Runtime.getRuntime().addShutdownHook(new Thread(WORKER_GROUP::shutdownGracefully));
     }
 
-    private final SocketChannelDecoder channelDecoder;
-    private final SocketChannelEncoder<?> channelEncoder;
+    private final NettyChannelDecoder channelDecoder;
+    private final NettyChannelEncoder<?> channelEncoder;
 
-    public RxtxChannel(RxtxChannelConfig config, SocketChannelDecoder channelDecoder, SocketChannelEncoder<?> channelEncoder,
-                       ChannelDispatcher channelDispatcher) {
+    public RxtxChannel(RxtxChannelConfig config, NettyChannelDecoder channelDecoder, NettyChannelEncoder<?> channelEncoder,
+                       Dispatcher channelDispatcher) {
 
         super.config = config;
 

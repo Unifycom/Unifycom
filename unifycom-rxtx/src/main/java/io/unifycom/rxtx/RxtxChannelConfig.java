@@ -1,6 +1,6 @@
 package io.unifycom.rxtx;
 
-import io.unifycom.socket.AbstractSocketChannelConfig;
+import io.unifycom.netty.AbstractSocketChannelConfig;
 import org.apache.commons.lang3.StringUtils;
 
 public class RxtxChannelConfig extends AbstractSocketChannelConfig {

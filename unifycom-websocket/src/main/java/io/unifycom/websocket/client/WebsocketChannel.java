@@ -2,7 +2,7 @@ package io.unifycom.websocket.client;
 
 import io.unifycom.AbstractChannel;
 import io.unifycom.Channel;
-import io.unifycom.dispatch.DefaultChannelDispatcher;
+import io.unifycom.dispatch.DefaultDispatcher;
 import io.unifycom.event.DisconnectedEvent;
 import io.unifycom.websocket.event.codec.AbstractTextToEventDecoder;
 import io.unifycom.websocket.event.codec.ResultToTextEncoder;
@@ -52,7 +52,7 @@ public class WebsocketChannel extends AbstractChannel {
     public WebsocketChannel(WebsocketChannelConfig config, AbstractTextToEventDecoder textToEventDecoder) {
 
         this.config = config;
-        this.channelDispatcher = new DefaultChannelDispatcher(textToEventDecoder, new ResultToTextEncoder());
+        this.channelDispatcher = new DefaultDispatcher(textToEventDecoder, new ResultToTextEncoder());
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::close));
     }

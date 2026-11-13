@@ -1,6 +1,6 @@
 package io.unifycom.websocket.client;
 
-import io.unifycom.dispatch.ChannelDispatcher;
+import io.unifycom.dispatch.Dispatcher;
 import io.unifycom.event.ConnectedEvent;
 import io.unifycom.event.DisconnectedEvent;
 import io.undertow.websockets.core.AbstractReceiveListener;
@@ -18,9 +18,9 @@ class WebsocketHandlingNotifier extends HandlingNotifier<WebSocketChannel, URI> 
     private static final Logger logger = LoggerFactory.getLogger(WebsocketHandlingNotifier.class);
 
     private WebsocketChannel channel;
-    private ChannelDispatcher channelDispatcher;
+    private Dispatcher channelDispatcher;
 
-    public WebsocketHandlingNotifier(ChannelDispatcher channelDispatcher, WebsocketChannel channel) {
+    public WebsocketHandlingNotifier(Dispatcher channelDispatcher, WebsocketChannel channel) {
 
         this.channel = channel;
         this.channelDispatcher = channelDispatcher;

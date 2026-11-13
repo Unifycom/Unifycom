@@ -6,11 +6,11 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.MessageToMessageDecoder;
-import io.unifycom.socket.codec.DefaultSocketChannelDecoder;
+import io.unifycom.netty.codec.DefaultNettyChannelDecoder;
 
 import java.nio.charset.Charset;
 
-public class DelimiterBasedJsonDecoder extends DefaultSocketChannelDecoder {
+public class DelimiterBasedJsonDecoder extends DefaultNettyChannelDecoder {
 
     private Charset charset;
 

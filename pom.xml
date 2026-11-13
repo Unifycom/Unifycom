@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.unifycom</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>unifycom-parent</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
 
-    <name>Unifycom-parent</name>
+    <name>Unifycom Parent</name>
     <description>The Unifycom parent POM.</description>
     <url>https://github.com/Unifycom</url>
 
@@ -39,8 +39,8 @@
     </issueManagement>
 
     <modules>
-        <module>unifycom</module>
-        <module>unifycom-socket</module>
+        <module>unifycom-core</module>
+        <module>unifycom-netty</module>
         <module>unifycom-tcp</module>
         <module>unifycom-udp</module>
         <module>unifycom-rxtx</module>
@@ -90,12 +90,12 @@
         <dependencies>
             <dependency>
                 <groupId>io.github.unifycom</groupId>
-                <artifactId>unifycom</artifactId>
+                <artifactId>unifycom-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.github.unifycom</groupId>
-                <artifactId>unifycom-socket</artifactId>
+                <artifactId>unifycom-netty</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

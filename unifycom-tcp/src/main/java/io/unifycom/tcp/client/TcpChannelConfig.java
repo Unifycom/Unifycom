@@ -4,7 +4,7 @@ package io.unifycom.tcp.client;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.unifycom.socket.AbstractSocketChannelConfig;
+import io.unifycom.netty.AbstractSocketChannelConfig;
 import org.apache.commons.lang3.StringUtils;
 
 public class TcpChannelConfig extends AbstractSocketChannelConfig {

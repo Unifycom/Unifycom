@@ -1,13 +1,13 @@
 package io.unifycom.websocket.server;
 
 import io.undertow.websockets.core.WebSocketChannel;
-import io.unifycom.AbstractChannelHolder;
+import io.unifycom.ChannelRegistry;
 import io.unifycom.Channel;
 import java.net.InetSocketAddress;
 
 import org.apache.commons.lang3.StringUtils;
 
-class WebsocketChannelHolder extends AbstractChannelHolder {
+class WebsocketChannelHolder extends ChannelRegistry {
 
     public Channel get(WebSocketChannel channel) {
 

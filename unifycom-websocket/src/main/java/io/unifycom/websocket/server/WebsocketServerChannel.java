@@ -5,7 +5,7 @@ import static io.undertow.Handlers.websocket;
 
 import io.unifycom.AbstractServerChannel;
 import io.unifycom.Channel;
-import io.unifycom.dispatch.DefaultChannelDispatcher;
+import io.unifycom.dispatch.DefaultDispatcher;
 import io.unifycom.websocket.event.codec.AbstractTextToEventDecoder;
 import io.unifycom.websocket.event.codec.ResultToTextEncoder;
 import io.undertow.Undertow;
@@ -35,7 +35,7 @@ public class WebsocketServerChannel extends AbstractServerChannel {
         this.textToEventDecoder = textToEventDecoder;
 
         this.channelHolder = new WebsocketChannelHolder();
-        this.channelDispatcher = new DefaultChannelDispatcher(textToEventDecoder, new ResultToTextEncoder());
+        this.channelDispatcher = new DefaultDispatcher(textToEventDecoder, new ResultToTextEncoder());
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }

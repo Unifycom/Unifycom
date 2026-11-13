@@ -2,11 +2,11 @@ package io.unifycom.example.tcp.binary_frame;
 
 import io.unifycom.example.tcp.binary_frame.codec.TcpChannelInboundDecoder;
 import io.unifycom.example.tcp.binary_frame.codec.TcpChannelOutboundEncoder;
-import io.unifycom.example.tcp.binary_frame.event.codec.MyMessageToEventDecoder;
-import io.unifycom.example.tcp.binary_frame.event.codec.MyResultToMessageEncoder;
+import io.unifycom.example.tcp.binary_frame.event.codec.GreetingEventDecoder;
+import io.unifycom.example.tcp.binary_frame.event.codec.GreetingResultEncoder;
 import io.unifycom.example.tcp.binary_frame.handler.ConnectedEventHandler;
 import io.unifycom.example.tcp.binary_frame.handler.DisconnectedEventHandler;
-import io.unifycom.example.tcp.binary_frame.handler.HelloEventHandler;
+import io.unifycom.example.tcp.binary_frame.handler.GreetingEventHandler;
 import io.unifycom.example.tcp.binary_frame.handler.IdleEventHandler;
 import io.unifycom.tcp.client.TcpChannel;
 import io.unifycom.tcp.client.TcpChannelConfig;
@@ -40,11 +40,11 @@ public class BinaryFrameExample {
         TcpChannelOutboundEncoder encoder = new TcpChannelOutboundEncoder();
         TcpChannelInboundDecoder decoder = new TcpChannelInboundDecoder();
 
-        MyMessageToEventDecoder eventDecoder = new MyMessageToEventDecoder();
-        MyResultToMessageEncoder resultEncoder = new MyResultToMessageEncoder();
+        GreetingEventDecoder eventDecoder = new GreetingEventDecoder();
+        GreetingResultEncoder resultEncoder = new GreetingResultEncoder();
 
         // 使用自定义队列派发器
-        MyQueuableChannelDispatcher dispatcher = new MyQueuableChannelDispatcher(eventDecoder, resultEncoder);
+        InstructionGroupingDispatcher dispatcher = new InstructionGroupingDispatcher(eventDecoder, resultEncoder);
 
         TcpChannel channel = new TcpChannel(new TcpChannelConfig("localhost:8080"), decoder, encoder, dispatcher);
         /*
@@ -52,7 +52,7 @@ public class BinaryFrameExample {
          * TcpServerChannel channel = new TcpServerChannel(new TcpServerChannelConfig("8080"), decoder, encoder, dispatcher);
          */
 
-        channel.addLast(new HelloEventHandler(), new ConnectedEventHandler(), new DisconnectedEventHandler(), new IdleEventHandler());
+        channel.addLast(new GreetingEventHandler(), new ConnectedEventHandler(), new DisconnectedEventHandler(), new IdleEventHandler());
 
         channel.connect().blockUntilConnected();
         Thread.sleep(60 * 1000);

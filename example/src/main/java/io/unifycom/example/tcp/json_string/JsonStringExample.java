@@ -1,14 +1,14 @@
 package io.unifycom.example.tcp.json_string;
 
-import io.unifycom.dispatch.DefaultChannelDispatcher;
+import io.unifycom.dispatch.DefaultDispatcher;
 import io.unifycom.example.tcp.json_string.codec.DelimiterBasedJsonDecoder;
 import io.unifycom.example.tcp.json_string.codec.JsonMessageToByteEncoder;
-import io.unifycom.example.tcp.json_string.event.codec.MyResultToMessageEncoder;
+import io.unifycom.example.tcp.json_string.event.codec.GreetingResultEncoder;
 import io.unifycom.example.tcp.json_string.handler.ConnectedEventHandler;
 import io.unifycom.example.tcp.json_string.handler.DisconnectedEventHandler;
-import io.unifycom.example.tcp.json_string.handler.HelloEventHandler;
+import io.unifycom.example.tcp.json_string.handler.GreetingEventHandler;
 import io.unifycom.example.tcp.json_string.handler.IdleEventHandler;
-import io.unifycom.example.tcp.json_string.event.codec.MyMessageToEventDecoder;
+import io.unifycom.example.tcp.json_string.event.codec.GreetingEventDecoder;
 import io.unifycom.tcp.client.TcpChannel;
 import io.unifycom.tcp.client.TcpChannelConfig;
 
@@ -24,13 +24,13 @@ public class JsonStringExample {
         JsonMessageToByteEncoder encoder = new JsonMessageToByteEncoder(StandardCharsets.UTF_8);
         DelimiterBasedJsonDecoder decoder = new DelimiterBasedJsonDecoder(1000, "/", StandardCharsets.UTF_8);
 
-        MyMessageToEventDecoder eventDecoder = new MyMessageToEventDecoder();
-        MyResultToMessageEncoder resultEncoder = new MyResultToMessageEncoder();
-        DefaultChannelDispatcher dispatcher = new DefaultChannelDispatcher(eventDecoder, resultEncoder);
+        GreetingEventDecoder eventDecoder = new GreetingEventDecoder();
+        GreetingResultEncoder resultEncoder = new GreetingResultEncoder();
+        DefaultDispatcher dispatcher = new DefaultDispatcher(eventDecoder, resultEncoder);
 
         TcpChannel channel = new TcpChannel(new TcpChannelConfig("localhost:8080"), decoder, encoder, dispatcher);
 
-        channel.addLast(new HelloEventHandler(), new ConnectedEventHandler(), new DisconnectedEventHandler(), new IdleEventHandler());
+        channel.addLast(new GreetingEventHandler(), new ConnectedEventHandler(), new DisconnectedEventHandler(), new IdleEventHandler());
 
         channel.connect().blockUntilConnected();
         Thread.sleep(60 * 1000);

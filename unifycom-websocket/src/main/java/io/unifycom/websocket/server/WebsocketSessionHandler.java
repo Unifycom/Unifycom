@@ -2,7 +2,7 @@ package io.unifycom.websocket.server;
 
 import io.undertow.websockets.core.*;
 import io.unifycom.Channel;
-import io.unifycom.dispatch.ChannelDispatcher;
+import io.unifycom.dispatch.Dispatcher;
 import io.unifycom.event.ConnectedEvent;
 import io.unifycom.event.DisconnectedEvent;
 import io.undertow.websockets.WebSocketConnectionCallback;
@@ -15,9 +15,9 @@ class WebsocketSessionHandler implements WebSocketConnectionCallback {
     private static final Logger logger = LoggerFactory.getLogger(WebsocketSessionHandler.class);
 
     private WebsocketChannelHolder channelHolder;
-    private ChannelDispatcher channelDispatcher;
+    private Dispatcher channelDispatcher;
 
-    public WebsocketSessionHandler(ChannelDispatcher channelDispatcher, WebsocketChannelHolder channelHolder) {
+    public WebsocketSessionHandler(Dispatcher channelDispatcher, WebsocketChannelHolder channelHolder) {
 
         this.channelHolder = channelHolder;
         this.channelDispatcher = channelDispatcher;

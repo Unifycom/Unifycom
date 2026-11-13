@@ -1,16 +1,16 @@
 package io.unifycom.bluetooth.client;
 
 import io.unifycom.Ping;
-import io.unifycom.dispatch.ChannelDispatcher;
-import io.unifycom.socket.client.AbstractSocketChannelInboundHandler;
+import io.unifycom.dispatch.Dispatcher;
+import io.unifycom.netty.client.AbstractSocketChannelInboundHandler;
 
 public class BluetoothChannelInboundHandler extends AbstractSocketChannelInboundHandler {
-    public BluetoothChannelInboundHandler(ChannelDispatcher channelEventDispatcher) {
+    public BluetoothChannelInboundHandler(Dispatcher channelEventDispatcher) {
 
         super(channelEventDispatcher);
     }
 
-    public BluetoothChannelInboundHandler(ChannelDispatcher channelDispatcher, io.unifycom.Channel channel, Ping ping) {
+    public BluetoothChannelInboundHandler(Dispatcher channelDispatcher, io.unifycom.Channel channel, Ping ping) {
 
         super(channelDispatcher, channel, ping);
     }

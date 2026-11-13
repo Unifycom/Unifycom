@@ -6,7 +6,7 @@
 
     <parent>
         <groupId>io.github.unifycom</groupId>
-        <artifactId>parent</artifactId>
+        <artifactId>unifycom-parent</artifactId>
         <version>${revision}</version>
     </parent>
 
@@ -15,7 +15,7 @@
     <dependencies>
         <dependency>
             <groupId>io.github.unifycom</groupId>
-            <artifactId>unifycom-socket</artifactId>
+            <artifactId>unifycom-netty</artifactId>
         </dependency>
 
         <dependency>

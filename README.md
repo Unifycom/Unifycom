@@ -22,9 +22,9 @@
 
 ## 工程依赖图
 ```
-                                       pom.xml[parent]
+                                       pom.xml[unifycom-parent]
                                              |
-                                          unifycom
+                                        unifycom-core
                                              |
                            +-----------------+--------------+
                            |                                |
@@ -40,8 +40,8 @@
 
 |          模块          |            功能                              |
 |-----------------------|----------------------------------------------|
-|pom.xml[parent]        |项目POM，管理Maven项目模块、依赖、版本              |
-|unifycom                 |项目框架，封装了Channel基础接口、事件、拦截器和分发器  |
+|pom.xml[unifycom-parent]|项目POM，管理Maven项目模块、依赖、版本             |
+|unifycom-core            |项目框架，封装了Channel基础接口、事件、拦截器和分发器  |
 |unifycom-netty           |基于Netty Channel的封装，让使用Netty Channel的子项目使用更简单，例如 断线重连|
 |unifycom-tcp             |基于Netty的TCP Channel，已实现客户端和服务端|
 |unifycom-rxtx            |基于Netty的串口通道|
@@ -51,13 +51,13 @@
 以TCP为例，创建客户端
 ```
 TcpChannel channel = new TcpChannel("localhost:8080", decoder, encoder, dispatcher);
-channel.addLast(new HelloEventHandler(), new ConnectedEventHandler(), new DisconnectedEventHandler(), new IdleEventHandler());
+channel.addLast(new GreetingEventHandler(), new ConnectedEventHandler(), new DisconnectedEventHandler(), new IdleEventHandler());
 channel.connect().blockUntilConnected();
 ```
 创建服务器端
 ```
 TcpServerChannel channel = new TcpServerChannel("8080", decoder, encoder, dispatcher);
-channel.addLast(new HelloEventHandler(), new ConnectedEventHandler(), new DisconnectedEventHandler(), new IdleEventHandler());
+channel.addLast(new GreetingEventHandler(), new ConnectedEventHandler(), new DisconnectedEventHandler(), new IdleEventHandler());
 channel.startup();
 ```
 主要的区别只有两处：  

@@ -5,9 +5,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.util.ReferenceCountUtil;
 import io.unifycom.example.tcp.binary_frame.protocol.OutboundMessage;
-import io.unifycom.socket.codec.DefaultSocketChannelEncoder;
+import io.unifycom.netty.codec.DefaultNettyChannelEncoder;
 
-public class TcpChannelOutboundEncoder extends DefaultSocketChannelEncoder {
+public class TcpChannelOutboundEncoder extends DefaultNettyChannelEncoder {
 
     @Override
     public MessageToByteEncoder getMessageToByteEncoder() {
