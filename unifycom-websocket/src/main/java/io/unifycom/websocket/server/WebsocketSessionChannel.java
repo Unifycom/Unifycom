@@ -1,11 +1,11 @@
 package io.unifycom.websocket.server;
 
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.util.AttributeKey;
 import io.unifycom.AbstractChannel;
 import io.unifycom.Channel;
-import io.undertow.websockets.core.WebSocketChannel;
-import io.undertow.websockets.core.WebSockets;
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.Objects;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -22,16 +22,16 @@ class WebsocketSessionChannel extends AbstractChannel {
     private static final AtomicInteger COUNTER = new AtomicInteger(0);
     private final String id = WebsocketSessionChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
 
-    private final WebSocketChannel channel;
+    private static final AttributeKey<String> ATTR_CHANNEL_NAME = AttributeKey.valueOf("X_ATTR.CHANNEL_NAME");
 
-    private static final String ATTR_CHANNEL_NAME = "X_ATTR.CHANNEL_NAME";
+    private final io.netty.channel.Channel channel;
 
-    public WebsocketSessionChannel(WebSocketChannel channel) {
+    public WebsocketSessionChannel(io.netty.channel.Channel channel) {
 
         this.channel = channel;
     }
 
-    public WebSocketChannel channel() {
+    public io.netty.channel.Channel unwrap() {
 
         return this.channel;
     }
@@ -39,14 +39,14 @@ class WebsocketSessionChannel extends AbstractChannel {
     @Override
     public String getName() {
 
-        return  Objects.toString(channel.getAttribute(ATTR_CHANNEL_NAME), StringUtils.EMPTY);
+        return Objects.toString(channel.attr(ATTR_CHANNEL_NAME).get(), StringUtils.EMPTY);
     }
 
     @Override
     public void setName(String name) {
 
         assert StringUtils.isNotBlank(name);
-        channel.setAttribute(ATTR_CHANNEL_NAME, name);
+        channel.attr(ATTR_CHANNEL_NAME).set(name);
     }
 
     @Override
@@ -54,22 +54,16 @@ class WebsocketSessionChannel extends AbstractChannel {
 
         if (channel != null) {
 
-            try {
-
-                channel.close();
-            } catch (IOException e) {
-
-                logger.warn(e.getLocalizedMessage(), e);
-            }
+            channel.close().syncUninterruptibly();
         }
 
-        logger.info("{}[{}] has been closed.", getName(), getName());
+        logger.info("{} has been closed.", getName());
     }
 
     @Override
     public boolean isClosed() {
 
-        return channel == null || !channel.isOpen();
+        return channel == null || (!channel.isActive() && !channel.isOpen());
     }
 
     @Override
@@ -77,19 +71,17 @@ class WebsocketSessionChannel extends AbstractChannel {
 
         if (channel != null) {
 
-            InetSocketAddress address = channel.getSourceAddress();
-            logger.warn("{} of {}:{} is client side connection, cannot connect it on server side.", getName(), address.getHostString(),
-                        address.getPort());
+            SocketAddress address = channel.remoteAddress();
+            logger.warn("{} of {} is client side connection, cannot connect it on server side.", getName(), address);
         }
 
-        throw new UnsupportedOperationException("The channel is created by client, this operation is unsupported on server side.");
+        return this;
     }
-
 
     @Override
     public boolean isActive() {
 
-        return channel != null && channel.isOpen();
+        return channel != null && channel.isActive();
     }
 
     @Override
@@ -100,9 +92,7 @@ class WebsocketSessionChannel extends AbstractChannel {
             throw new IOException("The channel is not ready yet");
         }
 
-        WebSockets.sendText(out.toString(), channel, null);
-
-        return null;
+        return channel.writeAndFlush(new TextWebSocketFrame(out.toString()));
     }
 
     @Override

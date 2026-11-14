@@ -72,7 +72,6 @@
         <reflections.version>0.10.2</reflections.version>
         <netty.version>4.1.93.Final</netty.version>
         <netty-transport-purejavacomm.version>1.0.1</netty-transport-purejavacomm.version>
-        <undertow.version>2.2.25.Final</undertow.version>
         <jackson.version>2.15.2</jackson.version>
         <netty-transport-bluetooth.version>1.0.0</netty-transport-bluetooth.version>
 
@@ -140,11 +139,6 @@
                 <version>${netty.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.undertow</groupId>
-                <artifactId>undertow-websockets-jsr</artifactId>
-                <version>${undertow.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j-api.version}</version>
@@ -178,11 +172,6 @@
                 <groupId>io.github.unifycom</groupId>
                 <artifactId>netty-transport-purejavacomm</artifactId>
                 <version>${netty-transport-purejavacomm.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.undertow</groupId>
-                <artifactId>undertow-core</artifactId>
-                <version>${undertow.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>

@@ -1,108 +1,65 @@
 package io.unifycom.websocket.client;
 
-import io.unifycom.AbstractChannel;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.http.EmptyHttpHeaders;
+import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
+import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
+import io.netty.handler.codec.http.websocketx.WebSocketClientProtocolHandler;
+import io.netty.handler.codec.http.websocketx.WebSocketVersion;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.unifycom.Channel;
 import io.unifycom.dispatch.DefaultDispatcher;
-import io.unifycom.event.DisconnectedEvent;
+import io.unifycom.netty.client.AbstractSocketChannel;
 import io.unifycom.websocket.event.codec.AbstractTextToEventDecoder;
 import io.unifycom.websocket.event.codec.ResultToTextEncoder;
-import io.undertow.connector.ByteBufferPool;
-import io.undertow.server.DefaultByteBufferPool;
-import io.undertow.websockets.client.WebSocketClient;
-import io.undertow.websockets.core.CloseMessage;
-import io.undertow.websockets.core.WebSocketChannel;
-import io.undertow.websockets.core.WebSockets;
-
 import java.io.IOException;
 import java.net.URI;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xnio.IoFuture;
-import org.xnio.IoFuture.Status;
-import org.xnio.OptionMap;
-import org.xnio.Xnio;
-import org.xnio.XnioWorker;
 
-public class WebsocketChannel extends AbstractChannel {
+public class WebsocketChannel extends AbstractSocketChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(WebsocketChannel.class);
 
-    private static final AtomicInteger COUNTER = new AtomicInteger(0);
-    private final String id = WebsocketChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
+    protected static final EventLoopGroup WORKER_GROUP = Epoll.isAvailable() ? new EpollEventLoopGroup() : new NioEventLoopGroup();
 
-    private static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(0, new BasicThreadFactory.Builder().namingPattern(
-            WebsocketChannel.class.getSimpleName() + "-reconnect-%d").daemon(true).build());
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(WORKER_GROUP::shutdownGracefully));
+    }
 
-    WebSocketChannel wsChannel;
-    private IoFuture<WebSocketChannel> channelFuture;
-    private ScheduledFuture<?> reconnectFuture;
+    private static final int MAX_HTTP_CONTENT_LENGTH = 65536;
+    private static final int MAX_FRAME_PAYLOAD_LENGTH = 65536;
 
-    private WebsocketChannelConfig config;
+    volatile boolean handshaked;
+
     private AbstractTextToEventDecoder textToEventDecoder;
 
     public WebsocketChannel(WebsocketChannelConfig config, AbstractTextToEventDecoder textToEventDecoder) {
 
         this.config = config;
+        this.textToEventDecoder = textToEventDecoder;
+
         this.channelDispatcher = new DefaultDispatcher(textToEventDecoder, new ResultToTextEncoder());
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::close));
-    }
-
-    @Override
-    public synchronized void close() {
-
-        DisconnectedEvent disconnectedEvent = null;
-
-        if (reconnectFuture != null) {
-
-            reconnectFuture.cancel(true);
-        }
-
-        if (wsChannel != null) {
-
-            try {
-
-                WebSockets.sendCloseBlocking(CloseMessage.NORMAL_CLOSURE, null, wsChannel);
-                wsChannel.close();
-
-                disconnectedEvent = new DisconnectedEvent(wsChannel.toString(), wsChannel.getSourceAddress().toString());
-            } catch (IOException e) {
-
-                logger.error("Closing " + getName() + " failed.", e);
-            }
-        }
-
-        if (channelFuture != null) {
-
-            Status status = channelFuture.cancel().await();
-            logger.debug("Cancelled channel future, {}.", status.toString());
-            channelFuture = null;
-        }
-
-        if (disconnectedEvent != null) {
-
-            logger.debug("Connection of {} is inactive.", disconnectedEvent.getRemoteAddress());
-            channelDispatcher.fire(this, disconnectedEvent);
-        }
-
-        wsChannel = null;
-
-        logger.info("{}{} has been closed.", getName(), StringUtils.isNotBlank(getName()) ? ("[" + getName() + "]") : StringUtils.EMPTY);
-    }
-
-    @Override
-    public boolean isClosed() {
-
-        return channelFuture == null;
     }
 
     @Override
@@ -114,92 +71,79 @@ public class WebsocketChannel extends AbstractChannel {
             return this;
         }
 
+        handshaked = false;
+        lock = new CountDownLatch(1);
+
+        WebsocketChannelConfig config = (WebsocketChannelConfig)this.config;
+
         URI uri = URI.create("ws://" + config.getConnectionString());
+        WebSocketClientHandshaker handshaker = WebSocketClientHandshakerFactory.newHandshaker(uri, WebSocketVersion.V13, null, true,
+                                                                                             EmptyHttpHeaders.INSTANCE, MAX_FRAME_PAYLOAD_LENGTH);
 
-        ByteBufferPool bufferPool = new DefaultByteBufferPool(false, 1024);
-        WebSocketClient.ConnectionBuilder connectionBuilder = WebSocketClient.connectionBuilder(getXnioWorker(), bufferPool, uri);
+        bootstrap = new Bootstrap();
+        Class<? extends SocketChannel> channelClass =
+                (WORKER_GROUP instanceof EpollEventLoopGroup) ? EpollSocketChannel.class : NioSocketChannel.class;
 
-        channelFuture = connectionBuilder.connect();
-        WebsocketHandlingNotifier handlingNotifier = new WebsocketHandlingNotifier(channelDispatcher, this);
+        bootstrap.group(WORKER_GROUP).channel(channelClass).remoteAddress(config.getHost(), config.getPort())
+                .option(ChannelOption.SO_KEEPALIVE, true).option(ChannelOption.TCP_NODELAY, true)
+                .handler(new ChannelInitializer<SocketChannel>() {
 
-        reconnectFuture = EXECUTOR.scheduleWithFixedDelay(() -> connect0(connectionBuilder, handlingNotifier, uri),
-                config.getAutoConnectIntervalSeconds(), config.getAutoConnectIntervalSeconds(),
-                TimeUnit.SECONDS);
+                    @Override
+                    public void initChannel(SocketChannel ch) {
+
+                        ch.pipeline().addLast(new HttpClientCodec()).addLast(new HttpObjectAggregator(MAX_HTTP_CONTENT_LENGTH))
+                            .addLast(new IdleStateHandler(0, 0, config.getPingIntervalSeconds()) {
+
+                                @Override
+                                public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+
+                                    ctx.channel().eventLoop().schedule(WebsocketChannel.this::connect0,
+                                            config.getAutoConnectIntervalSeconds(), TimeUnit.SECONDS);
+                                }
+                            }).addLast(new WebSocketClientProtocolHandler(handshaker, true, false))
+                            .addLast(new WebsocketChannelInboundHandler(channelDispatcher, WebsocketChannel.this));
+                    }
+                });
+
+        this.connect0();
 
         logger.info("{} client is connecting to {} ...... ", getName(), config.getConnectionString());
 
         return this;
     }
 
-    private synchronized void connect0(WebSocketClient.ConnectionBuilder connectionBuilder, WebsocketHandlingNotifier handlingNotifier, URI uri) {
+    @Override
+    protected synchronized void connect0() {
 
         if (isActive() || isClosed()) {
 
             return;
         }
 
-        if (channelFuture.getStatus() == Status.WAITING) {
+        handshaked = false;
 
-            return;
-        }
+        bootstrap.connect().addListener((ChannelFutureListener)futureListener -> {
 
-        channelFuture.cancel().await();
+            if (futureListener.isSuccess()) {
 
-        channelFuture = connectionBuilder.connect();
-        channelFuture.addNotifier(handlingNotifier, uri);
-        Status status = channelFuture.await();
+                if (channel != null) {
 
-        if (status != Status.DONE) {
+                    channel.close();
+                }
 
-            logger.warn("{} is not active, try again after {}s.", getName(), config.getAutoConnectIntervalSeconds());
-        }
-    }
+                channel = futureListener.channel();
+            } else {
 
-    private XnioWorker getXnioWorker() throws RuntimeException {
-
-        XnioWorker worker = null;
-
-        try {
-
-            worker = Xnio.getInstance().createWorker(OptionMap.EMPTY);
-        } catch (IOException e) {
-
-            throw new RuntimeException(e);
-        }
-
-        return worker;
+                logger.warn("{} is not active, try again after {}s. {}.", getName(), config.getAutoConnectIntervalSeconds(),
+                            futureListener.cause().getMessage());
+            }
+        });
     }
 
     @Override
     public boolean isActive() {
 
-        return wsChannel != null && wsChannel.isOpen();
-    }
-
-    @Override
-    public Channel blockUntilConnected() throws InterruptedException {
-
-        if (isClosed()) {
-
-            throw new InterruptedException("The channel could not be initialize, call connect() first.");
-        }
-
-        channelFuture.awaitInterruptibly();
-
-        return this;
-    }
-
-    @Override
-    public Channel blockUntilConnected(int timeout, TimeUnit timeUnit) throws InterruptedException {
-
-        if (isClosed()) {
-
-            throw new InterruptedException("The channel could not be initialize, call connect() first.");
-        }
-
-        channelFuture.awaitInterruptibly(timeout, timeUnit);
-
-        return this;
+        return super.isActive() && handshaked;
     }
 
     @Override
@@ -210,8 +154,41 @@ public class WebsocketChannel extends AbstractChannel {
             throw new IOException("The channel is not ready yet");
         }
 
-        WebSockets.sendText(out.toString(), wsChannel, null);
-        
-        return null;
+        return channel.writeAndFlush(new TextWebSocketFrame(out.toString()));
+    }
+
+    public URI getUri() {
+
+        return URI.create("ws://" + ((WebsocketChannelConfig)config).getConnectionString());
+    }
+
+    void onHandshakeComplete() {
+
+        handshaked = true;
+
+        if (lock != null) {
+
+            lock.countDown();
+        }
+    }
+
+    public void blockUntilHandshaked() throws InterruptedException {
+
+        if (isClosed()) {
+
+            throw new InterruptedException("The channel could not be initialize, call connect() first.");
+        }
+
+        lock.await();
+    }
+
+    public void blockUntilHandshaked(int timeout, TimeUnit unit) throws InterruptedException {
+
+        if (isClosed()) {
+
+            throw new InterruptedException("The channel could not be initialize, call connect() first.");
+        }
+
+        lock.await(timeout, unit);
     }
 }

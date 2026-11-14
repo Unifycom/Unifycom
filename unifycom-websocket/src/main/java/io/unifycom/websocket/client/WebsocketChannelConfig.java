@@ -1,14 +1,14 @@
 package io.unifycom.websocket.client;
 
 
-import io.unifycom.AbstractChannelConfig;
+import io.unifycom.netty.AbstractSocketChannelConfig;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
-public class WebsocketChannelConfig extends AbstractChannelConfig {
+public class WebsocketChannelConfig extends AbstractSocketChannelConfig {
 
     private int port;
     private String host;

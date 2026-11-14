@@ -1,18 +1,29 @@
 package io.unifycom.websocket.server;
 
-import static io.undertow.Handlers.path;
-import static io.undertow.Handlers.websocket;
-
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollServerSocketChannel;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.ServerSocketChannel;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.unifycom.AbstractServerChannel;
 import io.unifycom.Channel;
 import io.unifycom.dispatch.DefaultDispatcher;
 import io.unifycom.websocket.event.codec.AbstractTextToEventDecoder;
 import io.unifycom.websocket.event.codec.ResultToTextEncoder;
-import io.undertow.Undertow;
 import java.io.IOException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +34,12 @@ public class WebsocketServerChannel extends AbstractServerChannel {
     private static final AtomicInteger COUNTER = new AtomicInteger(0);
     private final String id = WebsocketServerChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
 
-    private Undertow undertow;
-    private WebsocketChannelHolder channelHolder;
+    private static final int MAX_HTTP_CONTENT_LENGTH = 65536;
+
+    private ServerBootstrap bootstrap;
+    private EventLoopGroup bossGroup = Epoll.isAvailable() ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
+    private EventLoopGroup workerGroup = Epoll.isAvailable() ? new EpollEventLoopGroup() : new NioEventLoopGroup();
+    private WebsocketChannelHolder channelHolder = new WebsocketChannelHolder();
 
     private WebsocketServerChannelConfig config;
     private AbstractTextToEventDecoder textToEventDecoder;
@@ -34,7 +49,6 @@ public class WebsocketServerChannel extends AbstractServerChannel {
         this.config = config;
         this.textToEventDecoder = textToEventDecoder;
 
-        this.channelHolder = new WebsocketChannelHolder();
         this.channelDispatcher = new DefaultDispatcher(textToEventDecoder, new ResultToTextEncoder());
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
@@ -43,16 +57,37 @@ public class WebsocketServerChannel extends AbstractServerChannel {
     @Override
     public synchronized AbstractServerChannel startup() {
 
-        if (undertow != null) {
+        if (bootstrap != null) {
 
             logger.warn("{} is listening on {}, don't start-up it again.", getName(), config.getPort(), config.getPath());
             return this;
         }
 
-        undertow = Undertow.builder().addHttpListener(config.getPort(), config.getHost())
-            .setHandler(path().addPrefixPath(config.getPath(), websocket(new WebsocketSessionHandler(channelDispatcher, channelHolder)))).build();
+        bootstrap = new ServerBootstrap();
+        Class<? extends ServerSocketChannel> channelClass =
+            (workerGroup instanceof EpollEventLoopGroup) ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
 
-        undertow.start();
+        String path = config.getPath();
+
+        bootstrap.group(bossGroup, workerGroup).channel(channelClass).childOption(ChannelOption.SO_KEEPALIVE, true)
+            .childOption(ChannelOption.TCP_NODELAY, true).childHandler(new ChannelInitializer<SocketChannel>() {
+
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+
+                    ch.pipeline().addLast(new HttpServerCodec()).addLast(new HttpObjectAggregator(MAX_HTTP_CONTENT_LENGTH))
+                        .addLast(new IdleStateHandler(config.getReaderIdleTimeSeconds(), config.getWriterIdleTimeSeconds(),
+                                                      config.getAllIdleTimeSeconds()))
+                        .addLast(new WebSocketServerProtocolHandler(path, null, true))
+                        .addLast(new WebsocketSessionHandler(channelDispatcher, channelHolder));
+                }
+            });
+
+        if (StringUtils.isEmpty(config.getHost())) {
+            bootstrap.bind(config.getPort());
+        } else {
+            bootstrap.bind(config.getHost(), config.getPort());
+        }
 
         logger.info("{} server is listening on {} ...... ", getName(), config.getConnectionString());
 
@@ -60,20 +95,9 @@ public class WebsocketServerChannel extends AbstractServerChannel {
     }
 
     @Override
-    public void shutdown() {
-
-        if (undertow != null) {
-
-            undertow.stop();
-            undertow = null;
-            logger.info("{} on {} has been shutdown.", getName(), config.getPort());
-        }
-    }
-
-    @Override
     public boolean isReady() {
 
-        return undertow != null;
+        return bossGroup != null && !bossGroup.isShutdown() && !bossGroup.isTerminated() && !bossGroup.isShuttingDown();
     }
 
     @Override
@@ -94,5 +118,35 @@ public class WebsocketServerChannel extends AbstractServerChannel {
     public Channel getChannel(String channelName) {
 
         return channelHolder.getByName(channelName);
+    }
+
+    @Override
+    public void shutdown() {
+
+        channelHolder.all().forEach(Channel::close);
+
+        if (workerGroup != null) {
+
+            workerGroup.shutdownGracefully();
+            logger.debug("WorkerGroup of {} on {} has been shutdown.", getName(), config.getPort());
+        }
+
+        if (bossGroup != null) {
+
+            bossGroup.shutdownGracefully();
+            logger.debug("BossGroup of {} on {} has been shutdown.", getName(), config.getPort());
+        }
+
+        if (channelDispatcher != null) {
+
+            channelDispatcher.close();
+            logger.info("Dispatcher of {} on {} has been shutdown gracefully.", getName(), config.getPort());
+        }
+
+        if (bootstrap != null) {
+
+            bootstrap = null;
+            logger.info("{} on {} has been shutdown gracefully.", getName(), config.getPort());
+        }
     }
 }
