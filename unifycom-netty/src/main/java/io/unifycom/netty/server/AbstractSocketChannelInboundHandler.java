@@ -12,7 +12,7 @@ import io.netty.handler.timeout.IdleStateEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractSocketChannelInboundHandler extends SimpleChannelInboundHandler<Object> {
+public class AbstractSocketChannelInboundHandler extends SimpleChannelInboundHandler<Object> {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractSocketChannelInboundHandler.class);
 

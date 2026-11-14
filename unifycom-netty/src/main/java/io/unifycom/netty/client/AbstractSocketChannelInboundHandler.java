@@ -1,5 +1,8 @@
 package io.unifycom.netty.client;
 
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.timeout.IdleStateEvent;
 import io.unifycom.Channel;
 import io.unifycom.Ping;
 import io.unifycom.dispatch.Dispatcher;
@@ -7,13 +10,15 @@ import io.unifycom.event.ConnectedEvent;
 import io.unifycom.event.DisconnectedEvent;
 import io.unifycom.event.IdleEvent;
 import io.unifycom.netty.util.IdleUtils;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.timeout.IdleStateEvent;
+import java.net.SocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractSocketChannelInboundHandler extends SimpleChannelInboundHandler<Object> {
+/**
+ * The inbound handler of all unifycom client channels, it fires the connected/disconnected/idle events and
+ * the decoded messages to the dispatcher.
+ */
+public class AbstractSocketChannelInboundHandler extends SimpleChannelInboundHandler<Object> {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractSocketChannelInboundHandler.class);
 
@@ -33,13 +38,22 @@ public abstract class AbstractSocketChannelInboundHandler extends SimpleChannelI
         this.channelDispatcher = channelDispatcher;
     }
 
+    /**
+     * The peer address used in the logs and the connected/disconnected events, defaults to the remote address,
+     * the datagram transport (udp) overrides it with the local address because its channel is bound locally.
+     */
+    protected SocketAddress peerAddress(ChannelHandlerContext ctx) {
+
+        return ctx.channel().remoteAddress();
+    }
+
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
         super.channelActive(ctx);
 
-        logger.info("Connection of {} is active.", ctx.channel().remoteAddress());
-        ConnectedEvent event = new ConnectedEvent(ctx.channel().id().asShortText(), ctx.channel().remoteAddress().toString());
+        logger.info("Connection of {} is active.", peerAddress(ctx));
+        ConnectedEvent event = new ConnectedEvent(ctx.channel().id().asShortText(), peerAddress(ctx).toString());
 
         channelDispatcher.fire(channel, event);
     }
@@ -49,8 +63,8 @@ public abstract class AbstractSocketChannelInboundHandler extends SimpleChannelI
 
         super.channelInactive(ctx);
 
-        logger.info("Connection of {} is inactive.", ctx.channel().remoteAddress());
-        DisconnectedEvent event = new DisconnectedEvent(ctx.channel().id().asShortText(), ctx.channel().remoteAddress().toString());
+        logger.info("Connection of {} is inactive.", peerAddress(ctx));
+        DisconnectedEvent event = new DisconnectedEvent(ctx.channel().id().asShortText(), peerAddress(ctx).toString());
 
         channelDispatcher.fire(channel, event);
     }
@@ -63,7 +77,7 @@ public abstract class AbstractSocketChannelInboundHandler extends SimpleChannelI
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
-        String info = String.format("%s threw exception.", ctx.channel().remoteAddress());
+        String info = String.format("%s threw exception.", peerAddress(ctx));
         logger.error(info, cause);
     }
 

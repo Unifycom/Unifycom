@@ -2,102 +2,46 @@ package io.unifycom.tcp.client;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollSocketChannel;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.timeout.IdleStateHandler;
-import io.unifycom.Channel;
-import io.unifycom.codec.AbstractChannelDecoder;
+import io.netty.channel.ChannelPipeline;
 import io.unifycom.dispatch.Dispatcher;
+import io.unifycom.netty.AbstractHostPortChannelConfig;
 import io.unifycom.netty.client.AbstractSocketChannel;
-import io.unifycom.netty.codec.ProxyProtocolV2Handler;
+import io.unifycom.netty.client.AbstractSocketChannelInboundHandler;
+import io.unifycom.netty.client.AutoReconnectIdleStateHandler;
 import io.unifycom.netty.codec.NettyChannelDecoder;
 import io.unifycom.netty.codec.NettyChannelEncoder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import io.unifycom.netty.codec.NettyCodecs;
+import io.unifycom.netty.codec.ProxyProtocolV2Handler;
 
 public class TcpChannel extends AbstractSocketChannel {
-
-    private static final Logger logger = LoggerFactory.getLogger(TcpChannel.class);
-
-    protected static final EventLoopGroup WORKER_GROUP = Epoll.isAvailable() ? new EpollEventLoopGroup() : new NioEventLoopGroup();
-
-    static {
-        Runtime.getRuntime().addShutdownHook(new Thread(WORKER_GROUP::shutdownGracefully));
-    }
-
-    private NettyChannelDecoder channelDecoder;
-    private NettyChannelEncoder<?> channelEncoder;
 
     public TcpChannel(TcpChannelConfig config, NettyChannelDecoder channelDecoder, NettyChannelEncoder<?> channelEncoder,
                       Dispatcher channelDispatcher) {
 
-        this.config = config;
-
-        this.channelDecoder = channelDecoder;
-        ((AbstractChannelDecoder) this.channelDecoder).setMaxInboundMessageSize(config.getMaxInboundMessageSize());
-
-        this.channelEncoder = channelEncoder;
-        this.channelDispatcher = channelDispatcher;
-
-        Runtime.getRuntime().addShutdownHook(new Thread(this::close));
+        super(config, channelDecoder, channelEncoder, channelDispatcher);
     }
 
     @Override
-    public synchronized Channel connect() {
+    protected void configureBootstrap(Bootstrap bootstrap) {
 
-        if (isActive()) {
+        TcpChannelConfig config = (TcpChannelConfig)this.config;
 
-            logger.warn("{} is active, don't connect it again.", getName());
-            return this;
-        }
+        bootstrap.remoteAddress(config.getHost(), config.getPort()).option(ChannelOption.SO_KEEPALIVE, true)
+            .option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
+    }
 
-        lock = new CountDownLatch(1);
-        bootstrap = new Bootstrap();
-        TcpChannelConfig config = (TcpChannelConfig) this.config;
+    @Override
+    protected void initPipeline(ChannelPipeline pipeline) {
 
-        Class<? extends SocketChannel> channelClass =
-                (WORKER_GROUP instanceof EpollEventLoopGroup) ? EpollSocketChannel.class : NioSocketChannel.class;
+        TcpChannelConfig config = (TcpChannelConfig)this.config;
 
-        bootstrap.group(WORKER_GROUP).channel(channelClass).remoteAddress(config.getHost(), config.getPort()).option(ChannelOption.SO_KEEPALIVE, true)
-                .option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-                .handler(new ChannelInitializer<SocketChannel>() {
+        pipeline.addLast(new ProxyProtocolV2Handler())
+            .addLast(new AutoReconnectIdleStateHandler(0, 0, config.getPingIntervalSeconds(), config.getAutoConnectIntervalSeconds(),
+                                                       this::connect0));
 
-                    @Override
-                    public void initChannel(SocketChannel ch) {
+        NettyCodecs.addByteCodecHandlers(pipeline, channelEncoder, channelDecoder);
 
-                        ch.pipeline().addLast(new ProxyProtocolV2Handler()).addLast(new IdleStateHandler(0, 0, config.getPingIntervalSeconds()) {
-
-                            @Override
-                            public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-
-                                ctx.channel().eventLoop().schedule(TcpChannel.this::connect0, config.getAutoConnectIntervalSeconds(), TimeUnit.SECONDS);
-                            }
-                        }).addLast(channelEncoder.getMessageToByteEncoder()).addLast(channelDecoder.getByteToMessageDecoder());
-
-                        if (channelDecoder.getMessageToMessageDecoder() != null) {
-
-                            ch.pipeline().addLast(channelDecoder.getMessageToMessageDecoder());
-                        }
-
-                        ch.pipeline().addLast(new TcpChannelInboundHandler(channelDispatcher, TcpChannel.this, ping));
-                    }
-                });
-
-        this.connect0();
-
-        logger.info("{} client is connecting to {} ...... ", getName(), config.getConnectionString());
-
-        return this;
+        pipeline.addLast(new AbstractSocketChannelInboundHandler(channelDispatcher, this, ping));
     }
 }

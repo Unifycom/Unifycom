@@ -2,70 +2,47 @@ package io.unifycom.rxtx;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFactory;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.oio.OioEventLoopGroup;
-import io.netty.handler.timeout.IdleStateHandler;
-import io.unifycom.Channel;
 import io.unifycom.dispatch.Dispatcher;
 import io.unifycom.netty.channel.purejavacomm.PureJavaCommChannel;
 import io.unifycom.netty.channel.purejavacomm.PureJavaCommChannelConfig;
 import io.unifycom.netty.channel.purejavacomm.PureJavaCommDeviceAddress;
 import io.unifycom.netty.client.AbstractSocketChannel;
+import io.unifycom.netty.client.AbstractSocketChannelInboundHandler;
+import io.unifycom.netty.client.AutoReconnectIdleStateHandler;
 import io.unifycom.netty.codec.NettyChannelDecoder;
 import io.unifycom.netty.codec.NettyChannelEncoder;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.unifycom.netty.codec.NettyCodecs;
+import io.unifycom.netty.util.EventLoopGroups;
 
 @SuppressWarnings("deprecation")
 public class RxtxChannel extends AbstractSocketChannel {
 
-    private static final Logger logger = LoggerFactory.getLogger(RxtxChannel.class);
-
-    private static final AtomicInteger COUNTER = new AtomicInteger(0);
-    private final String id = RxtxChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
-
-    private static final EventLoopGroup WORKER_GROUP = new OioEventLoopGroup();
+    private static final EventLoopGroup WORKER_GROUP = EventLoopGroups.newOioEventLoopGroup();
 
     static {
-        Runtime.getRuntime().addShutdownHook(new Thread(WORKER_GROUP::shutdownGracefully));
+        EventLoopGroups.shutdownHook(WORKER_GROUP);
     }
-
-    private final NettyChannelDecoder channelDecoder;
-    private final NettyChannelEncoder<?> channelEncoder;
 
     public RxtxChannel(RxtxChannelConfig config, NettyChannelDecoder channelDecoder, NettyChannelEncoder<?> channelEncoder,
                        Dispatcher channelDispatcher) {
 
-        super.config = config;
-
-        this.channelDecoder = channelDecoder;
-
-        this.channelEncoder = channelEncoder;
-        this.channelDispatcher = channelDispatcher;
-
-        Runtime.getRuntime().addShutdownHook(new Thread(this::close));
+        super(config, channelDecoder, channelEncoder, channelDispatcher);
     }
 
     @Override
-    public synchronized Channel connect() {
+    protected EventLoopGroup workerGroup() {
+
+        return WORKER_GROUP;
+    }
+
+    @Override
+    protected ChannelFactory<? extends io.netty.channel.Channel> channelFactory() {
 
         RxtxChannelConfig config = (RxtxChannelConfig)this.config;
 
-        if (isActive()) {
-
-            logger.warn("{} is active, don't connect it again.", getName());
-            return this;
-        }
-
-        lock = new CountDownLatch(1);
-        bootstrap = new Bootstrap();
-
-        bootstrap.group(WORKER_GROUP).channelFactory((ChannelFactory<PureJavaCommChannel>)() -> {
+        return (ChannelFactory<PureJavaCommChannel>)() -> {
 
             PureJavaCommChannel channel = new PureJavaCommChannel();
             channel.config().setBaudrate(config.getBaudrate());
@@ -73,33 +50,27 @@ public class RxtxChannel extends AbstractSocketChannel {
             channel.config().setParitybit(PureJavaCommChannelConfig.Paritybit.valueOf(config.getParitybit()));
             channel.config().setStopbits(PureJavaCommChannelConfig.Stopbits.valueOf(config.getStopbits()));
             return channel;
-        }).remoteAddress(new PureJavaCommDeviceAddress(config.getPort())).handler(new ChannelInitializer<PureJavaCommChannel>() {
+        };
+    }
 
-            @Override
-            public void initChannel(PureJavaCommChannel ch) {
+    @Override
+    protected void configureBootstrap(Bootstrap bootstrap) {
 
-                ch.pipeline().addLast(new IdleStateHandler(0, 0, config.getPingIntervalSeconds()) {
+        RxtxChannelConfig config = (RxtxChannelConfig)this.config;
 
-                    @Override
-                    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+        bootstrap.remoteAddress(new PureJavaCommDeviceAddress(config.getPort()));
+    }
 
-                        ctx.channel().eventLoop().schedule(RxtxChannel.super::connect0, config.getAutoConnectIntervalSeconds(), TimeUnit.SECONDS);
-                    }
-                }).addLast(channelEncoder.getMessageToByteEncoder()).addLast(channelDecoder.getByteToMessageDecoder());
+    @Override
+    protected void initPipeline(ChannelPipeline pipeline) {
 
-                if (channelDecoder.getMessageToMessageDecoder() != null) {
+        RxtxChannelConfig config = (RxtxChannelConfig)this.config;
 
-                    ch.pipeline().addLast(channelDecoder.getMessageToMessageDecoder());
-                }
+        pipeline.addLast(new AutoReconnectIdleStateHandler(0, 0, config.getPingIntervalSeconds(), config.getAutoConnectIntervalSeconds(),
+                                                           this::connect0));
 
-                ch.pipeline().addLast(new RxtxChannelInboundHandler(channelDispatcher, RxtxChannel.this, ping));
-            }
-        });
+        NettyCodecs.addByteCodecHandlers(pipeline, channelEncoder, channelDecoder);
 
-        super.connect0();
-
-        logger.info("{} client is connecting to {} ...... ", getName(), config.getConnectionString());
-
-        return this;
+        pipeline.addLast(new AbstractSocketChannelInboundHandler(channelDispatcher, this, ping));
     }
 }

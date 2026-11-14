@@ -8,6 +8,7 @@ import io.unifycom.Envelope;
 import io.unifycom.dispatch.Dispatcher;
 import io.unifycom.event.ConnectedEvent;
 import io.unifycom.event.IdleEvent;
+import io.unifycom.netty.server.AbstractNettyChannelRegistry;
 import io.unifycom.netty.util.IdleUtils;
 import java.net.SocketAddress;
 import org.slf4j.Logger;
@@ -17,10 +18,10 @@ public class UdpServerChannelInboundHandler extends SimpleChannelInboundHandler<
 
     private static final Logger logger = LoggerFactory.getLogger(UdpServerChannelInboundHandler.class);
 
-    private final UdpChannelRegistry channelHolder;
+    private final AbstractNettyChannelRegistry channelHolder;
     private final Dispatcher channelDispatcher;
 
-    public UdpServerChannelInboundHandler(Dispatcher channelDispatcher, UdpChannelRegistry channelHolder) {
+    public UdpServerChannelInboundHandler(Dispatcher channelDispatcher, AbstractNettyChannelRegistry channelHolder) {
 
         this.channelHolder = channelHolder;
         this.channelDispatcher = channelDispatcher;

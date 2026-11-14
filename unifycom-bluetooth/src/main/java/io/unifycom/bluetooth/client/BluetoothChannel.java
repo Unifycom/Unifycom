@@ -1,97 +1,64 @@
 package io.unifycom.bluetooth.client;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.oio.OioEventLoopGroup;
-import io.netty.handler.timeout.IdleStateHandler;
-import io.unifycom.Channel;
 import io.unifycom.dispatch.Dispatcher;
 import io.unifycom.netty.channel.bluetooth.BluetoothDeviceAddress;
 import io.unifycom.netty.channel.bluetooth.OioBluetoothChannel;
 import io.unifycom.netty.client.AbstractSocketChannel;
+import io.unifycom.netty.client.AbstractSocketChannelInboundHandler;
+import io.unifycom.netty.client.AutoReconnectIdleStateHandler;
 import io.unifycom.netty.codec.NettyChannelDecoder;
 import io.unifycom.netty.codec.NettyChannelEncoder;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.unifycom.netty.codec.NettyCodecs;
+import io.unifycom.netty.util.EventLoopGroups;
 
 @SuppressWarnings("deprecation")
 public class BluetoothChannel extends AbstractSocketChannel {
 
-    private static final Logger logger = LoggerFactory.getLogger(BluetoothChannel.class);
-
-    private static final AtomicInteger COUNTER = new AtomicInteger(0);
-    private final String id = BluetoothChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
-
-    private static final EventLoopGroup WORKER_GROUP = new OioEventLoopGroup();
+    private static final EventLoopGroup WORKER_GROUP = EventLoopGroups.newOioEventLoopGroup();
 
     static {
-        Runtime.getRuntime().addShutdownHook(new Thread(WORKER_GROUP::shutdownGracefully));
+        EventLoopGroups.shutdownHook(WORKER_GROUP);
     }
-
-    private final NettyChannelDecoder channelDecoder;
-    private final NettyChannelEncoder<?> channelEncoder;
 
     public BluetoothChannel(BluetoothChannelConfig config, NettyChannelDecoder channelDecoder, NettyChannelEncoder<?> channelEncoder,
                             Dispatcher channelDispatcher) {
 
-        super.config = config;
-
-        this.channelDecoder = channelDecoder;
-
-        this.channelEncoder = channelEncoder;
-        this.channelDispatcher = channelDispatcher;
-
-        Runtime.getRuntime().addShutdownHook(new Thread(this::close));
+        super(config, channelDecoder, channelEncoder, channelDispatcher);
     }
 
     @Override
-    public synchronized Channel connect() {
+    protected EventLoopGroup workerGroup() {
+
+        return WORKER_GROUP;
+    }
+
+    @Override
+    protected Class<? extends io.netty.channel.Channel> channelClass() {
+
+        return OioBluetoothChannel.class;
+    }
+
+    @Override
+    protected void configureBootstrap(Bootstrap bootstrap) {
 
         BluetoothChannelConfig config = (BluetoothChannelConfig)this.config;
 
-        if (isActive()) {
+        bootstrap.remoteAddress(new BluetoothDeviceAddress(config.getConnectionString()));
+    }
 
-            logger.warn("{} is active, don't connect it again.", getName());
-            return this;
-        }
+    @Override
+    protected void initPipeline(ChannelPipeline pipeline) {
 
-        lock = new CountDownLatch(1);
-        bootstrap = new Bootstrap();
+        BluetoothChannelConfig config = (BluetoothChannelConfig)this.config;
 
-        bootstrap.group(WORKER_GROUP).channel(OioBluetoothChannel.class).remoteAddress(new BluetoothDeviceAddress(config.getConnectionString()))
-            .handler(new ChannelInitializer<OioBluetoothChannel>() {
+        pipeline.addLast(new AutoReconnectIdleStateHandler(0, 0, config.getPingIntervalSeconds(), config.getAutoConnectIntervalSeconds(),
+                                                           this::connect0));
 
-                @Override
-                public void initChannel(OioBluetoothChannel ch) {
+        NettyCodecs.addByteCodecHandlers(pipeline, channelEncoder, channelDecoder);
 
-                    ch.pipeline().addLast(new IdleStateHandler(0, 0, config.getPingIntervalSeconds()) {
-
-                        @Override
-                        public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-
-                            ctx.channel().eventLoop()
-                                .schedule(BluetoothChannel.super::connect0, config.getAutoConnectIntervalSeconds(), TimeUnit.SECONDS);
-                        }
-                    }).addLast(channelEncoder.getMessageToByteEncoder()).addLast(channelDecoder.getByteToMessageDecoder());
-
-                    if (channelDecoder.getMessageToMessageDecoder() != null) {
-
-                        ch.pipeline().addLast(channelDecoder.getMessageToMessageDecoder());
-                    }
-
-                    ch.pipeline().addLast(new BluetoothChannelInboundHandler(channelDispatcher, BluetoothChannel.this, ping));
-                }
-            });
-
-        super.connect0();
-
-        logger.info("{} client is connecting to {} ...... ", getName(), config.getConnectionString());
-
-        return this;
+        pipeline.addLast(new AbstractSocketChannelInboundHandler(channelDispatcher, this, ping));
     }
 }

@@ -1,15 +1,14 @@
 package io.unifycom.udp.server;
 
-import io.unifycom.Channel;
-import io.unifycom.Envelope;
 import io.netty.channel.DefaultAddressedEnvelope;
-import java.io.IOException;
+import io.unifycom.Envelope;
+import io.unifycom.netty.server.NettySessionChannel;
 import java.net.SocketAddress;
 import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UdpSessionChannel extends io.unifycom.netty.server.NettySessionChannel {
+public class UdpSessionChannel extends NettySessionChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(UdpSessionChannel.class);
 
@@ -27,21 +26,23 @@ public class UdpSessionChannel extends io.unifycom.netty.server.NettySessionChan
     }
 
     @Override
-    public Future<Void> send(Object out) throws IOException {
+    protected SocketAddress keySocketAddress() {
+
+        return this.remoteAddress;
+    }
+
+    @Override
+    protected Object wrapOutbound(Object out) {
 
         if (out instanceof Envelope) {
 
             Envelope envelope = (Envelope)out;
             SocketAddress receiver = envelope.getReceiver() != null ? (SocketAddress)envelope.getReceiver() : remoteAddress;
 
-            out = new DefaultAddressedEnvelope<>(envelope.getContent(), receiver, remoteAddress);
-
-        } else {
-
-            out = new DefaultAddressedEnvelope<>(out, remoteAddress);
+            return new DefaultAddressedEnvelope<>(envelope.getContent(), receiver, remoteAddress);
         }
 
-        return super.send(out);
+        return new DefaultAddressedEnvelope<>(out, remoteAddress);
     }
 
     @Override

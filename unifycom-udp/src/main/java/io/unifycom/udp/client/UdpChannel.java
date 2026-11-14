@@ -1,95 +1,69 @@
 package io.unifycom.udp.client;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.DefaultAddressedEnvelope;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollDatagramChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.epoll.EpollDatagramChannel;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.internal.SocketUtils;
-import io.unifycom.Channel;
 import io.unifycom.Envelope;
-import io.unifycom.codec.AbstractChannelDecoder;
 import io.unifycom.dispatch.Dispatcher;
+import io.unifycom.netty.AbstractHostPortChannelConfig;
 import io.unifycom.netty.client.AbstractSocketChannel;
 import io.unifycom.netty.codec.NettyChannelDecoder;
 import io.unifycom.netty.codec.NettyChannelEncoder;
+import io.unifycom.netty.codec.NettyCodecs;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class UdpChannel extends AbstractSocketChannel {
-
-    private static final Logger logger = LoggerFactory.getLogger(UdpChannel.class);
-
-    protected static final EventLoopGroup WORKER_GROUP = Epoll.isAvailable() ? new EpollEventLoopGroup() : new NioEventLoopGroup();
-
-    static {
-        Runtime.getRuntime().addShutdownHook(new Thread(WORKER_GROUP::shutdownGracefully));
-    }
-
-    private NettyChannelDecoder channelDecoder;
-    private NettyChannelEncoder<?> channelEncoder;
 
     public UdpChannel(UdpChannelConfig config, NettyChannelDecoder channelDecoder, NettyChannelEncoder<?> channelEncoder,
                       Dispatcher channelDispatcher) {
 
-        this.config = config;
-
-        this.channelDecoder = channelDecoder;
-        ((AbstractChannelDecoder)this.channelDecoder).setMaxInboundMessageSize(config.getMaxInboundMessageSize());
-
-        this.channelEncoder = channelEncoder;
-        this.channelDispatcher = channelDispatcher;
-
-        Runtime.getRuntime().addShutdownHook(new Thread(this::close));
+        super(config, channelDecoder, channelEncoder, channelDispatcher);
     }
 
     @Override
-    public synchronized Channel connect() {
+    protected Class<? extends io.netty.channel.Channel> channelClass() {
 
-        if (isActive()) {
+        return (workerGroup() instanceof EpollEventLoopGroup) ? EpollDatagramChannel.class : NioDatagramChannel.class;
+    }
 
-            logger.warn("{} is active, don't connect it again.", getName());
-            return this;
-        }
+    @Override
+    protected void configureBootstrap(Bootstrap bootstrap) {
 
-        lock = new CountDownLatch(1);
-        bootstrap = new Bootstrap();
+        bootstrap.option(ChannelOption.SO_BROADCAST, true);
+    }
+
+    @Override
+    protected void initPipeline(ChannelPipeline pipeline) {
+
         UdpChannelConfig config = (UdpChannelConfig)this.config;
 
-        Class<? extends DatagramChannel> channelClass =
-            (WORKER_GROUP instanceof EpollEventLoopGroup) ? EpollDatagramChannel.class : NioDatagramChannel.class;
+        pipeline.addLast(new IdleStateHandler(0, 0, config.getPingIntervalSeconds()));
 
-        bootstrap.group(WORKER_GROUP).channel(channelClass).option(ChannelOption.SO_BROADCAST, true)
-            .handler(new ChannelInitializer<DatagramChannel>() {
+        NettyCodecs.addMessageCodecHandlers(pipeline, channelDecoder, channelEncoder);
 
-                @Override
-                public void initChannel(DatagramChannel ch) {
+        pipeline.addLast(new UdpChannelInboundHandler(channelDispatcher, this, ping));
+    }
 
-                    ch.pipeline().addLast(new IdleStateHandler(0, 0, config.getPingIntervalSeconds()))
-                        .addLast(channelDecoder.getMessageToMessageDecoder()).addLast(channelEncoder.getMessageToMessageEncoder())
-                        .addLast(new UdpChannelInboundHandler(channelDispatcher, UdpChannel.this, ping));
-                }
-            });
+    /**
+     * The udp channel is connectionless, it binds the local address instead of connecting to the remote peer.
+     */
+    @Override
+    protected void doConnect() {
 
-        super.channel = bootstrap.bind(socketAddress(config)).channel();
+        UdpChannelConfig config = (UdpChannelConfig)this.config;
 
-        logger.info("{} is listening on {} ...... ", getName(), config.getConnectionString());
-
-        return this;
+        channel = bootstrap.bind(bindAddress(config)).channel();
     }
 
     @Override
@@ -104,7 +78,7 @@ public class UdpChannel extends AbstractSocketChannel {
         return super.send(out);
     }
 
-    private static SocketAddress socketAddress(UdpChannelConfig config) {
+    private static SocketAddress bindAddress(UdpChannelConfig config) {
 
         if (StringUtils.isEmpty(config.getHost())) {
 

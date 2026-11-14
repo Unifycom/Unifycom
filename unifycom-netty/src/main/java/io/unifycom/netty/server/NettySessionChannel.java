@@ -30,6 +30,15 @@ public class NettySessionChannel extends AbstractChannel {
         return this.channel;
     }
 
+    /**
+     * The socket address used to generate the key in the session registry, defaults to the remote address of the
+     * netty channel, the transports whose session address differs from it (udp) override it.
+     */
+    protected SocketAddress keySocketAddress() {
+
+        return channel != null ? channel.remoteAddress() : null;
+    }
+
     @Override
     public synchronized void close() {
 
@@ -74,7 +83,16 @@ public class NettySessionChannel extends AbstractChannel {
             throw new IOException("The channel is not ready yet");
         }
 
-        return channel.writeAndFlush(out);
+        return channel.writeAndFlush(wrapOutbound(out));
+    }
+
+    /**
+     * Wraps the outbound message before it is flushed to the netty channel, defaults to no wrapping, the
+     * transports with their own frame protocol (websocket/udp) override it.
+     */
+    protected Object wrapOutbound(Object out) {
+
+        return out;
     }
 
     @Override

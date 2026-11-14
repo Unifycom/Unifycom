@@ -1,152 +1,54 @@
 package io.unifycom.websocket.server;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollServerSocketChannel;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.ServerSocketChannel;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.websocketx.WebSocketFrameAggregator;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.timeout.IdleStateHandler;
-import io.unifycom.AbstractServerChannel;
-import io.unifycom.Channel;
 import io.unifycom.dispatch.DefaultDispatcher;
+import io.unifycom.netty.server.AbstractNettyChannelRegistry;
+import io.unifycom.netty.server.AbstractNettyServerChannel;
+import io.unifycom.websocket.event.codec.AbstractBinaryToEventDecoder;
 import io.unifycom.websocket.event.codec.AbstractTextToEventDecoder;
 import io.unifycom.websocket.event.codec.ResultToTextEncoder;
-import java.io.IOException;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.unifycom.websocket.event.codec.WebsocketMessageToEventDecoder;
 
-public class WebsocketServerChannel extends AbstractServerChannel {
-
-    private static final Logger logger = LoggerFactory.getLogger(WebsocketServerChannel.class);
-
-    private static final AtomicInteger COUNTER = new AtomicInteger(0);
-    private final String id = WebsocketServerChannel.class.getSimpleName() + "-" + COUNTER.getAndIncrement();
+public class WebsocketServerChannel extends AbstractNettyServerChannel {
 
     private static final int MAX_HTTP_CONTENT_LENGTH = 65536;
 
-    private ServerBootstrap bootstrap;
-    private EventLoopGroup bossGroup = Epoll.isAvailable() ? new EpollEventLoopGroup(1) : new NioEventLoopGroup(1);
-    private EventLoopGroup workerGroup = Epoll.isAvailable() ? new EpollEventLoopGroup() : new NioEventLoopGroup();
-    private WebsocketChannelHolder channelHolder = new WebsocketChannelHolder();
-
-    private WebsocketServerChannelConfig config;
-    private AbstractTextToEventDecoder textToEventDecoder;
-
     public WebsocketServerChannel(WebsocketServerChannelConfig config, AbstractTextToEventDecoder textToEventDecoder) {
 
-        this.config = config;
-        this.textToEventDecoder = textToEventDecoder;
+        this(config, textToEventDecoder, null);
+    }
 
-        this.channelDispatcher = new DefaultDispatcher(textToEventDecoder, new ResultToTextEncoder());
+    public WebsocketServerChannel(WebsocketServerChannelConfig config, AbstractTextToEventDecoder textToEventDecoder,
+                                  AbstractBinaryToEventDecoder binaryToEventDecoder) {
 
-        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+        super(config, null, null, new AbstractNettyChannelRegistry());
+
+        this.channelDispatcher = new DefaultDispatcher(new WebsocketMessageToEventDecoder(textToEventDecoder, binaryToEventDecoder),
+                                                       new ResultToTextEncoder());
     }
 
     @Override
-    public synchronized AbstractServerChannel startup() {
+    protected void configureServerBootstrap(ServerBootstrap serverBootstrap) {
 
-        if (bootstrap != null) {
-
-            logger.warn("{} is listening on {}, don't start-up it again.", getName(), config.getPort(), config.getPath());
-            return this;
-        }
-
-        bootstrap = new ServerBootstrap();
-        Class<? extends ServerSocketChannel> channelClass =
-            (workerGroup instanceof EpollEventLoopGroup) ? EpollServerSocketChannel.class : NioServerSocketChannel.class;
-
-        String path = config.getPath();
-
-        bootstrap.group(bossGroup, workerGroup).channel(channelClass).childOption(ChannelOption.SO_KEEPALIVE, true)
-            .childOption(ChannelOption.TCP_NODELAY, true).childHandler(new ChannelInitializer<SocketChannel>() {
-
-                @Override
-                protected void initChannel(SocketChannel ch) throws Exception {
-
-                    ch.pipeline().addLast(new HttpServerCodec()).addLast(new HttpObjectAggregator(MAX_HTTP_CONTENT_LENGTH))
-                        .addLast(new IdleStateHandler(config.getReaderIdleTimeSeconds(), config.getWriterIdleTimeSeconds(),
-                                                      config.getAllIdleTimeSeconds()))
-                        .addLast(new WebSocketServerProtocolHandler(path, null, true))
-                        .addLast(new WebsocketSessionHandler(channelDispatcher, channelHolder));
-                }
-            });
-
-        if (StringUtils.isEmpty(config.getHost())) {
-            bootstrap.bind(config.getPort());
-        } else {
-            bootstrap.bind(config.getHost(), config.getPort());
-        }
-
-        logger.info("{} server is listening on {} ...... ", getName(), config.getConnectionString());
-
-        return this;
+        serverBootstrap.childOption(ChannelOption.SO_KEEPALIVE, true).childOption(ChannelOption.TCP_NODELAY, true);
     }
 
     @Override
-    public boolean isReady() {
+    protected void initChannel(io.netty.channel.Channel ch) {
 
-        return bossGroup != null && !bossGroup.isShutdown() && !bossGroup.isTerminated() && !bossGroup.isShuttingDown();
-    }
+        WebsocketServerChannelConfig config = (WebsocketServerChannelConfig)this.config;
 
-    @Override
-    public Future<Void> send(String channelName, Object out) throws IOException {
-
-        Channel ch = getChannel(channelName);
-
-        if (ch == null) {
-
-            logger.error("Not found any channel by name {}.", channelName);
-            return null;
-        }
-
-        return ch.send(out);
-    }
-
-    @Override
-    public Channel getChannel(String channelName) {
-
-        return channelHolder.getByName(channelName);
-    }
-
-    @Override
-    public void shutdown() {
-
-        channelHolder.all().forEach(Channel::close);
-
-        if (workerGroup != null) {
-
-            workerGroup.shutdownGracefully();
-            logger.debug("WorkerGroup of {} on {} has been shutdown.", getName(), config.getPort());
-        }
-
-        if (bossGroup != null) {
-
-            bossGroup.shutdownGracefully();
-            logger.debug("BossGroup of {} on {} has been shutdown.", getName(), config.getPort());
-        }
-
-        if (channelDispatcher != null) {
-
-            channelDispatcher.close();
-            logger.info("Dispatcher of {} on {} has been shutdown gracefully.", getName(), config.getPort());
-        }
-
-        if (bootstrap != null) {
-
-            bootstrap = null;
-            logger.info("{} on {} has been shutdown gracefully.", getName(), config.getPort());
-        }
+        ch.pipeline().addLast(new HttpServerCodec()).addLast(new HttpObjectAggregator(MAX_HTTP_CONTENT_LENGTH))
+            .addLast(new IdleStateHandler(config.getReaderIdleTimeSeconds(), config.getWriterIdleTimeSeconds(),
+                                          config.getAllIdleTimeSeconds()))
+            .addLast(new WebSocketServerProtocolHandler(config.getPath(), null, true))
+            .addLast(new WebSocketFrameAggregator(config.getMaxFramePayloadLength()))
+            .addLast(new WebsocketChannelInboundHandler(channelDispatcher, channelHolder));
     }
 }

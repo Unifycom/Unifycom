@@ -1,35 +1,32 @@
 package io.unifycom.bluetooth.server;
 
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.oio.OioEventLoopGroup;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.unifycom.AbstractServerChannel;
-import io.unifycom.Channel;
-import io.unifycom.codec.AbstractChannelDecoder;
 import io.unifycom.dispatch.Dispatcher;
 import io.unifycom.netty.codec.NettyChannelDecoder;
 import io.unifycom.netty.codec.NettyChannelEncoder;
+import io.unifycom.netty.codec.NettyCodecs;
+import io.unifycom.netty.server.AbstractNettyChannelRegistry;
+import io.unifycom.netty.server.AbstractNettyServerChannel;
+import io.unifycom.netty.server.AbstractSocketChannelInboundHandler;
+import io.unifycom.netty.util.EventLoopGroups;
 import java.io.IOException;
-import java.util.concurrent.Future;
 import javax.microedition.io.Connector;
 import javax.microedition.io.StreamConnection;
 import javax.microedition.io.StreamConnectionNotifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The bluetooth server channel, the bluetooth transport is oio so it accepts the connections by itself with an
+ * acceptor thread instead of a {@link io.netty.bootstrap.ServerBootstrap}, it overrides {@link #startup()} with
+ * its own accepting flow but still reuses the rest of the server skeleton.
+ */
 @SuppressWarnings("deprecation")
-public class BluetoothServerChannel extends AbstractServerChannel {
+public class BluetoothServerChannel extends AbstractNettyServerChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(BluetoothServerChannel.class);
-
-    private BluetoothServerChannelConfig config;
-    private NettyChannelDecoder channelDecoder;
-    private NettyChannelEncoder<?> channelEncoder;
-
-    private EventLoopGroup workerGroup = new OioEventLoopGroup();
-    private BluetoothChannelRegistry channelHolder = new BluetoothChannelRegistry();
 
     private StreamConnectionNotifier notifier;
     private Thread acceptorThread;
@@ -38,15 +35,10 @@ public class BluetoothServerChannel extends AbstractServerChannel {
     public BluetoothServerChannel(BluetoothServerChannelConfig config, NettyChannelDecoder channelDecoder, NettyChannelEncoder<?> channelEncoder,
                                   Dispatcher channelDispatcher) {
 
-        this.config = config;
+        super(config, channelDecoder, channelEncoder, new AbstractNettyChannelRegistry());
 
-        this.channelDecoder = channelDecoder;
-        ((AbstractChannelDecoder)this.channelDecoder).setMaxInboundMessageSize(this.config.getMaxInboundMessageSize());
-
-        this.channelEncoder = channelEncoder;
         this.channelDispatcher = channelDispatcher;
-
-        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+        this.workerGroup = EventLoopGroups.newOioEventLoopGroup();
     }
 
     @Override
@@ -107,44 +99,23 @@ public class BluetoothServerChannel extends AbstractServerChannel {
         }
     }
 
-    private void initChannel(OioBluetoothAcceptedChannel ch) {
+    @Override
+    protected void initChannel(io.netty.channel.Channel ch) {
+
+        BluetoothServerChannelConfig config = (BluetoothServerChannelConfig)this.config;
 
         ch.pipeline().addLast(
-                new IdleStateHandler(config.getReaderIdleTimeSeconds(), config.getWriterIdleTimeSeconds(), config.getAllIdleTimeSeconds()))
-            .addLast(channelEncoder.getMessageToByteEncoder()).addLast(channelDecoder.getByteToMessageDecoder());
+                new IdleStateHandler(config.getReaderIdleTimeSeconds(), config.getWriterIdleTimeSeconds(), config.getAllIdleTimeSeconds()));
 
-        if (channelDecoder.getMessageToMessageDecoder() != null) {
+        NettyCodecs.addByteCodecHandlers(ch.pipeline(), channelEncoder, channelDecoder);
 
-            ch.pipeline().addLast(channelDecoder.getMessageToMessageDecoder());
-        }
-
-        ch.pipeline().addLast(new BluetoothChannelInboundHandler(channelDispatcher, channelHolder));
+        ch.pipeline().addLast(new AbstractSocketChannelInboundHandler(channelDispatcher, channelHolder));
     }
 
     @Override
     public boolean isReady() {
 
         return ready && acceptorThread != null && acceptorThread.isAlive();
-    }
-
-    @Override
-    public Future<Void> send(String channelName, Object out) throws IOException {
-
-        Channel ch = getChannel(channelName);
-
-        if (ch == null) {
-
-            logger.error("Not found any channel by name {}.", channelName);
-            return null;
-        }
-
-        return ch.send(out);
-    }
-
-    @Override
-    public Channel getChannel(String channelName) {
-
-        return channelHolder.getByName(channelName);
     }
 
     @Override
@@ -161,23 +132,9 @@ public class BluetoothServerChannel extends AbstractServerChannel {
             }
         }
 
-        channelHolder.all().forEach(Channel::close);
-
-        if (workerGroup != null) {
-
-            workerGroup.shutdownGracefully();
-            logger.debug("WorkerGroup of {} on {} has been shutdown.", getName(), config.getConnectionString());
-        }
-
-        if (channelDispatcher != null) {
-
-            channelDispatcher.close();
-            logger.info("Dispatcher of {} on {} has been shutdown gracefully.", getName(), config.getConnectionString());
-        }
+        super.shutdown();
 
         notifier = null;
         acceptorThread = null;
-
-        logger.info("{} on {} has been shutdown gracefully.", getName(), config.getConnectionString());
     }
 }

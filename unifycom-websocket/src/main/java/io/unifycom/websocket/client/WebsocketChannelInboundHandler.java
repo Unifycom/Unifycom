@@ -1,5 +1,6 @@
 package io.unifycom.websocket.client;
 
+import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
@@ -12,7 +13,6 @@ import io.unifycom.event.ConnectedEvent;
 import io.unifycom.event.DisconnectedEvent;
 import io.unifycom.event.IdleEvent;
 import io.unifycom.netty.util.IdleUtils;
-import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +93,7 @@ class WebsocketChannelInboundHandler extends SimpleChannelInboundHandler<Object>
             channelDispatcher.fire(channel, ((TextWebSocketFrame)msg).text());
         } else if (msg instanceof BinaryWebSocketFrame) {
 
-            channelDispatcher.fire(channel, ((BinaryWebSocketFrame)msg).content().toString(StandardCharsets.UTF_8));
+            channelDispatcher.fire(channel, ByteBufUtil.getBytes(((BinaryWebSocketFrame)msg).content()));
         }
     }
 
