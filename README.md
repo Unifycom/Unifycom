@@ -31,13 +31,13 @@
 | **L1** | 报文编解码层 | 在字节流与报文对象之间相互转换，框架内置部分通用编解码器，亦可自定义 |
 | **L0** | 通讯层 | 已实现 TCP 客户端/服务端、UDP、串口、蓝牙等通道 |
 
-## 工程结构
+## 工程架构
 
 ```mermaid
 graph TD
     A[unifycom-parent] --> B[unifycom-core]
     B --> C[unifycom-netty]
-    B --> H[unifycom-websocket]
+    C --> H[unifycom-websocket]
     C --> D[unifycom-tcp]
     C --> E[unifycom-rxtx]
     C --> F[unifycom-bluetooth]
